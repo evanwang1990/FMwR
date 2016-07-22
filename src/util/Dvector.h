@@ -2,6 +2,7 @@
 #define DVECTOR_H_
 
 #include <Rcpp.h>
+#include <vector>
 
 template <typename T> class DVector
 {
@@ -11,10 +12,8 @@ public:
 
 public:
   DVector()
-  {
-    dim = 0;
-    value = NULL;
-  }
+    :dim(0), value(0)
+  {}
 
   DVector(uint p_dim)
   {
@@ -54,16 +53,28 @@ public:
     for (uint i = 0; i < dim; i++) { value[i] = v[i]; }
   }
 
-  void assign(T* v)
-  {
-    if (v->dim != dim) { setSize(v->dim); }
-    for (uint i = 0; i < dim; i++) { value[i] = v[i]; }
-  }
+  // void assign(T* v)
+  // {
+  //   if (v->dim != dim) { setSize(v->dim); }
+  //   for (uint i = 0; i < dim; i++) { value[i] = v[i]; }
+  // }
 
   void assign(DVector<T>& v)
   {
     if (v.dim != dim) { setSize(v.dim); }
     for (uint i = 0; i < dim; i++) { value[i] = v.value[i]; }
+  }
+
+  void assign(NumericVector v)
+  {
+    uint p_dim = v.size();
+    if (dim != p_dim) { setSize(p_dim); }
+    NumericVector::iterator it = v.begin();
+    for (uint i = 0; i < dim; i++)
+    {
+      value[i] = *it;
+      it ++;
+    }
   }
 
 public:
