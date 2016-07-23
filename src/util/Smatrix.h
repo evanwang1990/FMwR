@@ -8,18 +8,6 @@
 typedef unsigned long long int uint64;
 typedef signed long long int int64;
 
-template <typename T> struct sparse_entry
-{
-  uint id;
-  T value;
-};
-
-template <typename T> struct sparse_row
-{
-  sparse_entry<T>* data;
-  uint size;
-};
-
 template <typename T> class SMatrixMeta
 {
 public:
@@ -36,27 +24,27 @@ public:
 template <typename T> class SMatrix//: public SMatrixMeta<T>
 {
 protected:
-  DVector<uint64*> row_idx;
-  DVector<uint64> col_idx;
+  DVector<uint*> row_idx;
+  DVector<uint> col_idx;
   DVector<T> value;
 
 public:
   uint dim1;
   uint dim2;
-  uint size;
+  uint64 size;
 
 public:
   SMatrix()
     : dim1(0), dim2(0), size(0)
   {}
 
-  SMatrix(List& _list)
+  SMatrix(List& _list) //TODO:统一数据类型
   {
     assert((_list.attr("class") == "SMatrix") && "The input is not SMatrix...");
     IntegerVector dim      = _list["dim"];
     dim1                   = dim[0];
     dim2                   = dim[1];
-    size                   = (uint)_list["size"];
+    size                   = (uint64)_list["size"];
     IntegerVector row_size = _list["row_size"];
     assert((dim1 == row_size.size()) && "the length of row_size is not equal to nrow...");
     value.assign(_list["value"]);
@@ -69,6 +57,30 @@ public:
       it += row_size[i];
     }
   }
+
+  T operator [] (uint i, uint j) const
+  {
+    uint* low = row_idx[i];
+    uint* high = (i == dim1) ? col_idx.end() : row_idx[i+1];
+    return search_column(low, high, j);
+  }
+
+  T search_column(uint* low, uint* high, uint col_idx) const
+  {
+    if (size == 0) { return 0.0; }
+    if ((col_idx > *high) || (col_idx < *low)) { return 0.0; }
+    uint* mid;
+    while (high > low)
+    {
+      mid = (low + high) >> 1;
+      if (*mid == col_idx) { break; }
+      if (*mid < col_idx) { low = mid; }
+      else { high = mid; }
+    }
+    if (*mid != col_idx) return 0.0;
+    return value[mid - col_idx.begin()];
+  }
+
 };
 
 
