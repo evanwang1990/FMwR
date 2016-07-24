@@ -43,9 +43,9 @@ public:
 
   T get(uint x) { return value[x]; }
 
-  T& operator() (uint x) {return value[x]; }
+  T& operator[] (uint x) {return value[x]; }
 
-  T operator() (uint x) const { return value[x]; }
+  T operator[] (uint x) const { return value[x]; }
 
   void wrap(std::vector<T>& v)
   {
