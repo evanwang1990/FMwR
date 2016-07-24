@@ -12,7 +12,7 @@ void test_DVector()
   DVector<int> x1(10);
   x1.init(2);
   x0.assign(x1);
-  x0(4) = 100;
+  x0[4] = 100;
   for (int* it = x0.begin(); it != x0.end(); ++it)
     cout<<*it<<" ";
   cout<<endl;
