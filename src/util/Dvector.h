@@ -78,11 +78,11 @@ public:
   }
 
 public:
-  T* begin() { return value; }
+  T* begin() const { return value; }
 
-  T* end() { return value + dim; }
+  T* end() const { return value + dim; }
 
-  uint size() { return dim; }
+  uint size() const { return dim; }
 };
 
 #endif
