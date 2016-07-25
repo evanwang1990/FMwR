@@ -2,26 +2,21 @@
 #define LSMATRIX_H_
 
 #include <Rcpp.h>
-#include <assert.h>
 #include "Dvector.h"
 
-typedef unsigned long long int uint64;
-typedef signed long long int int64;
 
-template <typename T> class SMatrixMeta
+//TODO: delete??
+template <typename T> class SMatrixBase
 {
 public:
-  virtual void begin() = 0;
-  virtual bool end() = 0;
-  virtual void next() = 0;
-//  virtual sparse_row<T>& get_row() = 0;
-  virtual uint get_row_index() = 0;
-  virtual uint nrow() = 0;
-  virtual uint ncol() = 0;
-  virtual uint size() = 0;
+  // virtual void begin() = 0;
+  // virtual bool end() = 0;
+  virtual uint nrow() const = 0;
+  virtual uint ncol() const = 0;
+  virtual uint nvalues() const = 0;
 };
 
-template <typename T> class SMatrix//: public SMatrixMeta<T>
+template <typename T> class SMatrix
 {
 protected:
   DVector<uint> row_idx;
