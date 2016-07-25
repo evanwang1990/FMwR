@@ -4,6 +4,8 @@
 #include <Rcpp.h>
 #include <vector>
 
+using namespace Rcpp;
+
 template <typename T> class DVector
 {
 public:
@@ -91,9 +93,18 @@ class DVectorDouble: public DVector<double>
 public:
   DVectorDouble(uint p_dim): DVector<double>(p_dim) {}
 
+  DVectorDouble(): DVector<double>() {}
+
   void init_norm(double mean, double stdev)
   {
     for (double* it = begin(); it != end(); ++it) { *it = Rf_rnorm(mean, stdev); }
+  }
+
+  NumericVector to_rtype()
+  {
+    NumericVector res(dim);
+    for (uint i = 0; i < dim; ++i) { res[i] = value[i]; }
+    return res;
   }
 };
 

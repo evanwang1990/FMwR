@@ -79,6 +79,8 @@ public:
 class DMatrixDouble: public DMatrix<double>
 {
 public:
+  DMatrixDouble(): DMatrix<double>() {}
+
   DMatrixDouble(uint p_dim1, uint p_dim2)
     : DMatrix<double>(p_dim1, p_dim2)
   {}
@@ -86,6 +88,16 @@ public:
   void init_norm(double mean, double stdev)
   {
     for (double* it = begin(); it != end(); ++it) { *it = Rf_rnorm(mean, stdev); }
+  }
+
+  Rcpp::NumericMatrix to_rtype()
+  {
+    Rcpp::NumericMatrix result(dim1, dim2);
+    for (uint i = 0; i < dim1; ++i)
+    {
+      for (uint j = 0; j < dim2; ++j) { result(i, j) = value[i][j]; }
+    }
+    return result;
   }
 };
 
