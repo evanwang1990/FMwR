@@ -76,4 +76,17 @@ public:
 
 };
 
+class DMatrixDouble: public DMatrix<double>
+{
+public:
+  DMatrixDouble(uint p_dim1, uint p_dim2)
+    : DMatrix<double>(p_dim1, p_dim2)
+  {}
+
+  void init_norm(double mean, double stdev)
+  {
+    for (double* it = begin(); it != end(); ++it) { *it = Rf_rnorm(mean, stdev); }
+  }
+};
+
 #endif

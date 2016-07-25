@@ -85,4 +85,16 @@ public:
   uint size() const { return dim; }
 };
 
+
+class DVectorDouble: public DVector<double>
+{
+public:
+  DVectorDouble(uint p_dim): DVector<double>(p_dim) {}
+
+  void init_norm(double mean, double stdev)
+  {
+    for (double* it = begin(); it != end(); ++it) { *it = Rf_rnorm(mean, stdev); }
+  }
+};
+
 #endif

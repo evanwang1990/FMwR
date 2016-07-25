@@ -16,6 +16,12 @@ void test_DVector()
   for (int* it = x0.begin(); it != x0.end(); ++it)
     cout<<*it<<" ";
   cout<<endl;
+
+  DVectorDouble x2(10);
+  x2.init_norm(0, 0.2);
+  for (double* it = x2.begin(); it != x2.end(); ++it)
+    cout<<*it<<" ";
+  cout<<endl;
 }
 
 
@@ -33,6 +39,16 @@ void test_DMatrix()
   for (uint i = 0; i < x0.nrow(); i++)
   {
     for (double* it = x0.row_begin(i); it != x0.row_end(i); it++)
+      cout<<*it<<" ";
+    cout<<endl;
+  }
+
+  cout<<endl;
+  DMatrixDouble x2(4, 4);
+  x2.init_norm(10,1);
+  for (uint i = 0; i < x2.nrow(); i++)
+  {
+    for (double* it = x2.row_begin(i); it != x2.row_end(i); it++)
       cout<<*it<<" ";
     cout<<endl;
   }
