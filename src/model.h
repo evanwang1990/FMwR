@@ -4,100 +4,90 @@
 #include <Rcpp.h>
 #include <omp.h>
 #include <assert.h>
+#include "util/Dvector.h"
+#include "util/Dmatrix.h"
+#include "util/Smatrix.h"
 
 using namespace Rcpp;
 
-void v_init(NumericMatrix v, double init_mean, double init_stdev);
-
-class fm_model
+class fm_model // FM with gbm use SMatrix<int> data, otherwise use SMatrix<float> data
 {
 private:
-  NumericVector m_sum, m_sum_sqr;
+  DVector<double> m_sum, m_sum_sqr;
 
 public:
   double w0;
-  NumericVector w;
-  NumericMatrix v;
+  DVectorDouble w;
+  DMatrixDouble v;
 
 public:
   uint num_attribute;
   bool k0, k1;
-  int num_factor;
+  uint num_factor;
   double reg0, regw, regv;
   double init_mean, init_stdev;
 
 public:
-  fm_model();
-  ~fm_model() {};
-  void init();
-  double predict(NumericVector x);
-  double predict(NumericVector x, NumericVector sum, NumericVector sum_sqr);
-  List save_model();
+  fm_model()
+    : num_factor(0), init_mean(0.0), init_stdev(0.01), reg0(0.0), regw(0.0), regv(0.0), k0(true), k1(true) //rename keep_w0
+  {}
+
+  ~fm_model() {}
+
+  void init()
+  {
+    w0 = 0.0;
+    w.setSize(num_attribute);
+    w.init(0.0);
+    v.setSize(num_factor, num_attribute);
+    v.init_norm(init_mean, init_stdev);
+    m_sum.setSize(num_factor);
+    m_sum_sqr.setSize(num_factor);
+  }
+
+  double predict(SMatrix<float>::Iterator &x)
+  {
+    return predict(x, m_sum, m_sum_sqr);
+  }
+
+  double predict(SMatrix<float>::Iterator x, DVector<double>& sum, DVector<double>& sum_sqr)
+  {
+    double pred = 0.0;
+    if (k0) { pred += w0; }
+    sum.init(0.0);
+    sum_sqr.init(0.0);
+    for ( ; !x.is_end(); ++x)
+    {
+      double _val = x.value;
+      uint _idx = x.index;
+      if (_idx >= num_attribute) { stop("Length of x is greater then then number of attributes..."); }
+      if (k1) pred += w[_idx] * _val;
+
+      double* it_v = v.begin() + _idx;
+      for (uint i = 0; i < num_factor; ++i)
+      {
+        double _tmp= *it_v * _val;
+        sum[i] += _tmp;
+        sum_sqr[i] += _tmp * _tmp;
+        it_v += num_attribute;
+      }
+    }
+
+    for (uint i = 0; i < num_factor; ++i) { pred += 0.5 * (sum[i] * sum[i] - sum_sqr[i]); }
+
+    return pred;
+  }
+
+  List save_model()
+  {
+    return List::create(
+      _["w0"] = w0,
+      _["w"]  = w.to_rtype(),
+      _["v"]  = v.to_rtype()
+    );
+  }
+
 };
 
-fm_model::fm_model()
-{
-  num_factor = 0;
-  init_mean  = 0;
-  init_stdev = 0.01;
-  reg0       = 0.0;
-  regw       = 0.0;
-  regv       = 0.0;
-  k0         = true; //rename keep_w0
-  k1         = true; //rename keep_w
-}
-
-void fm_model::init()
-{
-  w0 = 0.0;
-  w  = NumericVector(num_attribute); // all elements are 0 //TODO:add to class?
-  if (num_factor > 0)
-  {
-    v = NumericMatrix(num_factor, num_attribute);
-    v_init(v, init_mean, init_stdev);
-  }
-  m_sum     = NumericVector(num_factor);
-  m_sum_sqr = NumericVector(num_factor);
-}
-
-double fm_model::predict(NumericVector x) {return predict(x, m_sum, m_sum_sqr);}
-
-double fm_model::predict(NumericVector x, NumericVector sum, NumericVector sum_sqr)
-{
-  double reuslt = 0.0;
-  size_t len = x.size();
-  if (k0) result += w0;
-  if (k1)
-  {
-    assert((len == (size_t)(num_attribute)) && "The length of x is not equal the number of attributes\n");
-    for (size_t i = 0; i < len; i++)
-      result += w[i] * x[i];
-  }
-
-  NumericVector tmp(num_factor);
-  NumericVector tmp2(num_factor);
-  NumericMatrix::iterator p_v = v.begin();
-  NumericVector::iterator p_x = x.begin();
-  for (size_t i = 0; i < len; i++)
-  {
-    for (int f = 0; f < num_factor; f++)
-    {
-      double d = *p_v * *p_x;
-      tmp[f] += d;
-      tmp2[f] += d * d;
-      p_v ++;
-    }
-    p_x ++;
-  }
-  for (int f = 0; f < num_factor; f++)
-    result += 0.5 * (tmp[f] * tmp[f] -tmp2[f]);
-  return result;
-}
-
-void v_init(NumericMatrix v, double init_mean, double init_stdev)
-{
-  for (NumericMatrix::iterator p = v.begin(); p != v.end(); p++)
-    *p = Rf_rnorm(init_mean, init_stdev);
-}
 
 #endif
