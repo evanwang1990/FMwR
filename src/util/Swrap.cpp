@@ -20,6 +20,7 @@ List as_SMatrix(NumericMatrix data, bool transpose = true)
   return smatrix;
 }
 
+
 List as_SMatrix1(NumericMatrix data, bool transpose)
 {
   int nr = data.nrow(), nc = data.ncol();
@@ -37,7 +38,7 @@ List as_SMatrix1(NumericMatrix data, bool transpose)
   {
     for (int i = 0, j = 0; i < nr*nc; ++i, ++j)
     {
-      if (j == nr) { j = 0; it_row = row_size.begin(); }
+      if (j == nr) { j = 0; it_row ++; }
 
       double val = *it_data;
       if (val != 0.0)
@@ -49,9 +50,7 @@ List as_SMatrix1(NumericMatrix data, bool transpose)
         *it_row += 1;
         k ++;
       }
-
       it_data ++;
-      it_row ++;
     }
   }
   else
@@ -87,6 +86,7 @@ List as_SMatrix1(NumericMatrix data, bool transpose)
     _["size"] = k
   );
 }
+
 
 List as_SMatrix2(NumericMatrix data, bool transpose)
 {
@@ -131,7 +131,7 @@ List as_SMatrix2(NumericMatrix data, bool transpose)
   int thres = transpose ? nr : nc;
   for (int i = 0, j = 0; i < nr * nc; ++i, ++j)
   {
-    if (j == thres) { j = 0; it_row = row_size.begin(); }
+    if (j == thres) { j = 0; it_row ++; }
     if (*it1 != 0.0)
     {
       if (it1 != it2) *it2 = *it1;
@@ -141,7 +141,6 @@ List as_SMatrix2(NumericMatrix data, bool transpose)
       *it_row += 1;
     }
     it1 ++;
-    it_row ++;
   }
 
   value.resize(size);
