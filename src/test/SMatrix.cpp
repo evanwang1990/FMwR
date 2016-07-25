@@ -17,6 +17,15 @@ data <- matrix(c(1, 0, 0, 0,
 sdata <- as_SMatrix(data, T)
 */
 
+void test_iter (SMatrix<int>::Iterator& it)
+{
+  for (; !it.is_end(); ++it)
+  {
+    cout<<it.index<<" : "<<it.value<<" | ";
+  }
+  cout<<endl;
+}
+
 // [[Rcpp::export]]
 void test_smatrix(List x)
 {
@@ -32,11 +41,8 @@ void test_smatrix(List x)
   }
 
   // by Iterator
-  for (SMatrix<int>::Iterator it(y); !it.is_end(); ++it)
-  {
-    cout<<it.index<<" : "<<it.value<<" | ";
-  }
-  cout<<endl;
+  SMatrix<int>::Iterator it(y);
+  test_iter(it);
 
   // by row Iterator
   for (uint i = 0; i < y.nrow(); ++i)
