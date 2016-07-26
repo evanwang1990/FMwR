@@ -7,10 +7,10 @@
 #include "util/Dvector.h"
 #include "util/Dmatrix.h"
 #include "util/Smatrix.h"
-
+//TODO: 添加SOLVOE
 using namespace Rcpp;
 
-class fm_model // FM with gbm use SMatrix<int> data, otherwise use SMatrix<float> data
+class Model
 {
 private:
   DVector<double> m_sum, m_sum_sqr;
@@ -28,11 +28,11 @@ public:
   double init_mean, init_stdev;
 
 public:
-  fm_model()
+  Model()
     : num_factor(0), init_mean(0.0), init_stdev(0.01), reg0(0.0), regw(0.0), regv(0.0), k0(true), k1(true) //rename keep_w0
   {}
 
-  ~fm_model() {}
+  ~Model() {}
 
   void init()
   {
@@ -45,7 +45,7 @@ public:
     m_sum_sqr.setSize(num_factor);
   }
 
-  double predict(SMatrix<float>::Iterator &x)
+  double predict(SMatrix<float>::Iterator x)
   {
     return predict(x, m_sum, m_sum_sqr);
   }
