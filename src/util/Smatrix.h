@@ -27,6 +27,7 @@ public:
   uint dim1;
   uint dim2;
   uint size;
+  bool transposed; //TODO: 添加直接从numericmatrix导入数据的成员函数，标记tranposed
 
 public:
   SMatrix()
