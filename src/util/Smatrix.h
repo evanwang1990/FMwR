@@ -4,21 +4,9 @@
 #include <Rcpp.h>
 #include "Dvector.h"
 
-
-//TODO: delete??
-template <typename T> class SMatrixBase
-{
-public:
-  // virtual void begin() = 0;
-  // virtual bool end() = 0;
-  virtual uint nrow() const = 0;
-  virtual uint ncol() const = 0;
-  virtual uint nvalues() const = 0;
-};
-
 template <typename T> class SMatrix
 {
-protected:
+public:
   DVector<uint> row_idx;
   DVector<uint> col_idx;
   DVector<T> value;
@@ -31,33 +19,37 @@ public:
 
 public:
   SMatrix()
-    : dim1(0), dim2(0), size(0)
+    : dim1(0), dim2(0), size(0), transposed(false)
   {}
 
   SMatrix(List& _list) //TODO:统一数据类型
   {
-    assert((_list.attr("class") == "SMatrix") && "The input is not SMatrix...");
+    if (as<string>(_list.attr("class")) != "SMatrix") { stop("The input is not SMatrix type..."); }
+    transposed             = as<bool>(_list.attr("transposed"));
     IntegerVector dim      = _list["dim"];
     dim1                   = dim[0];
     dim2                   = dim[1];
     size                   = _list["size"];
     IntegerVector row_size = _list["row_size"];
-    assert((dim1 == row_size.size()) && "the length of row_size is not equal to nrow...");
+    if (dim1 != row_size.size()) { stop("the length of input's row_size is not correct..."); }
     value.assign(_list["value"]);
     col_idx.assign(_list["col_idx"]);
-    row_idx.setSize(dim1);
+    row_idx.setSize(dim1 + 1); //TODO: the last element is actually the end!!!
     row_idx.init(0);
-    for (uint i = 1; i < dim1; ++i)
+    for (uint i = 0; i < dim1; ++i)
     {
-      row_idx[i] = row_idx[i-1] + row_size[i-1];
+      row_idx[i + 1] = row_idx[i] + row_size[i];
     }
   }
+
+  SMatrix(NumericMatrix m) {} //TODO;
 
   T operator() (uint i, uint j) const
   {
     if (size == 0) { return 0.0; } // SMatrix is empty
     uint low = row_idx[i];
-    uint high = (i == (dim1 - 1)) ? col_idx.size() : row_idx[i+1];
+    // uint high = (i == (dim1 - 1)) ? col_idx.size() : row_idx[i+1];
+    uint high = row_idx[i+1]; // TEST
     if (high == low) { return 0.0; } // i row is empty
     if ((j > col_idx[high-1]) || (j < col_idx[low])) { return 0.0; } // not in range
     if (col_idx[low] == j) { return value[low]; }
@@ -98,6 +90,7 @@ protected:
   uint begin;
   uint end;
   uint pointer;
+  uint row;
 public:
   uint index;
   T value;
@@ -107,14 +100,16 @@ public:
     : matrix(_matrix)
   {
     begin   = matrix.row_idx[row_no];
-    end     = (row_no == (matrix.dim1 - 1)) ? matrix.size : matrix.row_idx[row_no+1];
+    // end     = (row_no == (matrix.dim1 - 1)) ? matrix.size : matrix.row_idx[row_no+1];
+    end     = matrix.row_idx[row_no+1];
     pointer = begin;
+    row     = row_no;
     index   = matrix.col_idx[pointer];
     value   = matrix.value[pointer];
   }
 
   Iterator(const SMatrix<T>& _matrix)
-    : matrix(_matrix), begin(0), end(_matrix.size), pointer(0), index(_matrix.col_idx[0]), value(_matrix.value[0])
+    : matrix(_matrix), begin(0), end(_matrix.size), pointer(0), row(0), index(_matrix.col_idx[0]), value(_matrix.value[0])
   {}
 
   ~Iterator() {}
@@ -124,6 +119,16 @@ public:
   void operator ++()
   {
     pointer += 1;
+    index = matrix.col_idx[pointer];
+    value = matrix.value[pointer];
+  }
+
+  void next()
+  { if (row == (matrix.dim1 - 1)) { return; }
+    row   += 1;
+    begin = pointer = matrix.row_idx[row];
+    // end   = (row == (matrix.dim1 - 1)) ? matrix.size : matrix.row_idx[row+1];
+    end   = matrix.row_idx[row+1];
     index = matrix.col_idx[pointer];
     value = matrix.value[pointer];
   }
