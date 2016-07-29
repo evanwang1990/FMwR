@@ -74,6 +74,38 @@ public:
 
   uint ncol() const { return dim2; }
 
+  void transpose()
+  {
+    T* tmp_ = new T[dim1 * dim2];
+    T* tmp__ = tmp_;
+    for (uint i = 0; i < dim2; ++i)
+    {
+      for (uint j = 0; j < dim1; ++j)
+      {
+        *tmp__ = value[j][i];
+        tmp__ ++;
+      }
+    }
+    delete [] value[0];
+    delete [] value;
+    value = new T*[dim2];
+    for (uint i = 0; i < dim2; ++i)
+    {
+      value[i] = tmp_;
+      tmp_ += dim1;
+    }
+    std::swap(dim1, dim2);
+  }
+
+  Rcpp::NumericMatrix to_rtype()
+  {
+    Rcpp::NumericMatrix result(dim1, dim2);
+    for (uint i = 0; i < dim1; ++i)
+    {
+      for (uint j = 0; j < dim2; ++j) { result(i, j) = value[i][j]; }
+    }
+    return result;
+  }
 };
 
 class DMatrixDouble: public DMatrix<double>
@@ -88,16 +120,6 @@ public:
   void init_norm(double mean, double stdev)
   {
     for (double* it = begin(); it != end(); ++it) { *it = Rf_rnorm(mean, stdev); }
-  }
-
-  Rcpp::NumericMatrix to_rtype()
-  {
-    Rcpp::NumericMatrix result(dim1, dim2);
-    for (uint i = 0; i < dim1; ++i)
-    {
-      for (uint j = 0; j < dim2; ++j) { result(i, j) = value[i][j]; }
-    }
-    return result;
   }
 };
 

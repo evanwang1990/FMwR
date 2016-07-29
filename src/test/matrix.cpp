@@ -54,6 +54,17 @@ void test_DMatrix()
   }
 }
 
+//[[Rcpp::export]]
+List test_DMatrix_traspose()
+{
+  DMatrixDouble m(2,5);
+  m.init_norm(0,2);
+  NumericMatrix res1 = m.to_rtype();
+  m.transpose();
+  NumericMatrix res2 = m.to_rtype();
+  return List::create(res1, res2);
+}
+
 #include <time.h>
 
 // [[Rcpp::export]]
