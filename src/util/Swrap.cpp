@@ -17,6 +17,7 @@ List as_SMatrix(NumericMatrix data, bool transpose = true)
   else
     smatrix = as_SMatrix1(data, transpose);
   smatrix.attr("class") = "SMatrix";
+  smatrix.attr("transposed") = transpose;
   return smatrix;
 }
 
