@@ -85,6 +85,13 @@ public:
   T* end() const { return value + dim; }
 
   uint size() const { return dim; }
+
+  NumericVector to_rtype()
+  {
+    NumericVector res(dim);
+    for (uint i = 0; i < dim; ++i) { res[i] = value[i]; }
+    return res;
+  }
 };
 
 
@@ -100,12 +107,6 @@ public:
     for (double* it = begin(); it != end(); ++it) { *it = Rf_rnorm(mean, stdev); }
   }
 
-  NumericVector to_rtype()
-  {
-    NumericVector res(dim);
-    for (uint i = 0; i < dim; ++i) { res[i] = value[i]; }
-    return res;
-  }
 };
 
 #endif
