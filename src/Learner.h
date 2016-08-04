@@ -6,15 +6,11 @@
 #include "Model.h"
 using namespace Rcpp;
 
-#define CLASSIFICATION 10
-#define REGRESSION     20
-#define RANKING        30
-
 class Learner
 {
 protected:
-  DVector<double> sum, sum_sqr;
-  DMatrix<double> pred_q_term;
+  // DVector<double> sum, sum_sqr;
+  // DMatrix<double> pred_q_term;
 
 protected:
   virtual double predict_case(SMatrix<float>::Iterator it)
@@ -28,21 +24,22 @@ public:
   Model* fm;
   float min_target;
   float max_target;
+  int nthreads;
 
 public:
   int TASK;
 
 public:
-  Learner(): TASK(CLASSIFICATION), meta(NULL) {}
+  Learner(): TASK(CLASSIFICATION), meta(NULL), nthreads(1) {}
 
   ~Learner() {}
 
-  virtual void init ()
-  {
-    sum.setSize(fm->num_factor);
-    sum_sqr.setSize(fm->num_factor);
-    pred_q_term.setSize(fm->num_factor, meta->num_relations + 1);
-  }
+  // virtual void init ()
+  // {
+  //   sum.setSize(fm->num_factor);
+  //   sum_sqr.setSize(fm->num_factor);
+  //   pred_q_term.setSize(fm->num_factor, meta->num_relations + 1);
+  // }
 
   virtual void learn(Data& train, Data& test) {}
 
@@ -63,7 +60,7 @@ public:
     uint num_cases = data.data->nrow();
     double p;
 
-    #pragma omp parallel for private(p) reduction(+:num_correct)
+    #pragma omp parallel for num_threads(nthreads) private(p) reduction(+:num_correct)
     for (uint i = 0; i < num_cases; ++i)
     {
       p = predict_case(Matrix<float>::Iterator it(data.data, i));
@@ -80,7 +77,7 @@ public:
     double y_hat, err;
     uint num_cases = data.data->nrow();
 
-    #pragma omp parallel for private(y_hat) private(err) reduction(+:rmse_sum_sqr) reduction(+:mae_sum_abs)
+    #pragma omp parallel for num_threads(nthreads) private(y_hat) private(err) reduction(+:rmse_sum_sqr) reduction(+:mae_sum_abs)
     for (uint i = 0; i < num_cases; ++i)
     {
       y_hat = predict_case(Matrix<float>::Iterator it(data.data, i));

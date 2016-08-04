@@ -2,54 +2,21 @@
 #define MCMC_ALS_H_
 
 #include <Rcpp.h>
+#include "util/Macros.h"
+#include "util/Random.h"
 #include "util/Dvector.h"
 #include "util/Dmatrix.h"
 #include "util/Smatrix.h"
 
-
-struct e_q_term
-{
-  double e;
-  double q;
-};
-
-
-struct relation_cache
-{
-  double wnum;
-  double q;
-  double wc;
-  double wc_sqr;
-  double y;
-  double we;
-  double weq;
-}
-
 class MCMC_ALS_Learner : public Learner
 {
-public: //TODO:??
-  virtual double evaluate(Data& data) { return std::numeric_limits<double>::quiet_NaN(); }
-protected:
-  virtual double predict_case(Data& data) {
-    throw "not supported for MCMC and ALS";
-  }
-
 protected:
   DVector<double> cache_for_group_values;
-  //empty_data_row;
-
-  DVector<double> pred_sum_all;
-  DVector<double> pred_sum_all_but5;
-  DVector<double> pred_this;
-
-  e_q_term* cache;
-  e_q_term* cache_test;
-
-  DVector<relation_cache*> rel_cache;
+  DVector<double> v_q;
 
 public:
-  uint max_iter;//??
-  uint num_iter;
+  uint max_iter;
+  uint iter_cntr; //TODO: 初始化
   uint num_eval_cases;
 
   double alpha_0, gamma_0, beta_0, mu_0;
@@ -62,29 +29,26 @@ public:
 
   bool do_sample;
   bool do_multilevel;
-  uint nan_cntr_v, nan_cntr_w, nan_cntr_w0, nan_cntr_alpha, nan_cntr_w_mu, nan_cntr_w_lambda, nan_cntr_v_mu, nan_cntr_v_lambda;
-	uint inf_cntr_v, inf_cntr_w, inf_cntr_w0, inf_cntr_alpha, inf_cntr_w_mu, inf_cntr_w_lambda, inf_cntr_v_mu, inf_cntr_v_lambda;
+  // uint nan_cntr_v, nan_cntr_w, nan_cntr_w0, nan_cntr_alpha, nan_cntr_w_mu, nan_cntr_w_lambda, nan_cntr_v_mu, nan_cntr_v_lambda;
+	// uint inf_cntr_v, inf_cntr_w, inf_cntr_w0, inf_cntr_alpha, inf_cntr_w_mu, inf_cntr_w_lambda, inf_cntr_v_mu, inf_cntr_v_lambda;
 
 protected:
-  virtual void _learn(Data& train, Data&test);
-  void predict_data_and_write_to_eterms(DVector<Data*>& main_data, DVector<e_q_term*>& main_cache);
-  void add_main_q(Data& train, uing f);
-  void draw_all(Data& train);
-  void draw_w0(double& w0, double& reg, Data& train);
-  void draw_w(double& w, double& w_mu, double& w_lambda, sparse_row<DATA_FLOAT>& feature_data);
-  void draw_w_rel(double& w, double& w_mu, double& w_lambda, sparse_row<DATA_FLOAT>& feature_data, relation_cache* r_cache);
-  void draw_v(double& v, double& v_mu, double& v_lambda, sparse_row<DATA_FLOAT>& feature_data);
-  void draw_v_rel(double& v, double& v_mu, double& v_lambda, sparse_row<DATA_FLOAT>& feature_data, relation_cache* r_cache);
-  void draw_alpha(double& alpha, uint num_train_total);
-  void draw_w_mu(double* w);
-  void draw_w_lambda(double* w);
-  void draw_v_mu();
-  void draw_v_lambda();
+  void update_all(Data& train, DVector<double>& error);
+
+  void update_alpha(Data& train, DVector<double>& error);
+  void update_w_mu();
+  void update_w_lambda();
+  void update_v_mu();
+  void update_v_lambda();
+
+  void update_w0(Data& train, DVector<double>& error);
+  void update_w(Data& train, DVector<double>& error);
+  void update_v(Data& train, DVector<double>& error);
 
 public:
-  virtual void predict(Data& data, DVector<double>* out);
+  virtual void predict(Data& data, DVector<double>& out);
   virtual void init();
-  virtual void lean();
+  virtual void learn();
 };
 
 void MCMC_ALS_Learner::init()
@@ -111,48 +75,444 @@ void MCMC_ALS_Learner::init()
   v_mu.init(0.0);
   v_lambda.setSize(g, fm->num_factor);
   v_lambda.setSize(0.0);
+
+  if (k1) {
+    w_mean.setSize(fm->num_attribute);
+    w_var.setSize(fm->num_attribute);
+  }
+
+  iter_cntr = 0;
+
 }
 
-virtual void MCMC_ALS_Learner::learn(Data& train, Data& test)
+virtual void MCMC_ALS_Learner::learn(Data& train)
 {
-  pred_sum_all.setSize(test.num_cases);
-  pred_sum_all.init(0.0);
-  pred_sum_all_but5.setSize(test.num_cases);
-  pred_sum_all_but5.init(0.0);
-  pred_this.setSize(test.num_cases);
-  pred_this.init(0.0);
+  DVector<double> train_err(train.num_cases);
+  // DVector<double> test_err(test.num_cases);
 
-  cache = new e_q_term[train.num_cases]; //TODO ~MCMC_ALS_Learner()??
-  cache_test = new e_q_term[test.num_cases];
-
-  rel_cache.setSize(train.relation.size());
-  for (uint i = 0; i < train.relation.size(); ++i)
+  for (; iter_cntr < max_iter; ++iter_cntr)
   {
-    uint rel_num_cases = train.relation[i].data->num_cases;
-    rel_cache[i] = new relation_cache[rel_num_cases]; //TODO
-    relation_cache* it = rel_cache[i]
-    for (uint j = 0; j < rel_num_cases; ++j)
-    {
-      it->wnum = 0;
-      it ++;
-    }
+    fm->predict_batch(train, train_err);
+    // fm->predict_batch(test, test_err);
+    calculate_error(train, train_err);
+    update_all(train, train_err);
   }
-
-  for (uint i = 0; i < train.relation.size(); ++i)
-  {
-    for (uint j = 0; j < train.relation[i].data_row_to_relation_row.size(); ++j)
-    {
-      rel_cache[i][train.relation[r].data_row_to_relation_row[r]].wnum += 1.0;
-    }
-  }
-
-  _learn(train, test);
-
-  // free data structures
-  for(uint i = 0; i < train.relation.size(); i++) { delete [] rel_cache[i]; }
-  delete [] cache_test;
-  delete [] cache;
 }
 
+
+void MCMC_ALS_Learner::update_all(Data& train, DVector<double>& error)
+{
+  if (train.num_cases != error.size()) {
+    stop("there's no the same number of cases between train and error datasets...");
+  }
+
+  if (train.num_features != fm->num_attribute) {
+    stop("there's no the same number of features between train and fm object...");
+  }
+
+  update_alpha(train, error);
+
+  if (fm->k0) { update_w0(train, error); }
+
+  if (fm->k1) {
+    update_w_lambda();
+    update_w_mu();
+    update_w(train, error);
+  }
+
+  if (fm->num_factor > 0) {
+    update_v_lambda();
+    update_v_mu();
+    update_v(train, error);
+  }
+}
+
+
+/***
+* update parameters
+*/
+void MCMC_ALS_Learner::update_w0(Data&train, DVector<double>& error)
+{
+  double err = 0;
+  for (double* it = error.begin(); it != error.end(); ++it)
+  { err += *it - w0; }
+
+  double w0_var = (double) 1.0 / (reg + alpha * train.num_cases);
+  double w0_mean = - (alpha * err - w0_mean_0 * reg) * w0_var;
+  double TMP(w0);
+  double OLD(w0) = w0;
+
+  if (do_sample) {
+    TMP(w0) = Rf_rnorm(w0_mean, std::sqrt(w0_var));
+  } else {
+    TMP(w0) = w0_mean;
+  }
+
+  CHECK_PARAM(w0,);
+  w0 = TMP(w0);
+
+  // update error
+  double diff_w0 = OLD(w0) - w0;
+  for (double *it = error.begin(); it != error.end(); ++it) {
+    *it -= diff_w0;
+  }
+}
+
+void MCMC_ALS_Learner::update_w(Data& train, DVector<double>& error)
+{
+  SMatrix<float>* tdata = train.data_t;
+
+  omp_set_num_threads(nthreads);
+  int actual_num_threads = omp_get_num_threads();
+  // set arrays to store the updated errors under each thread
+  DMatrix<double> errs(actual_num_threads, error.size());
+  errs.assign_by_row(error);
+
+  double w_mean, w_var, OLD(w), TMP(w), w_diff, tot_reduce, error_, val_;
+  uint j, g;
+  bool update_err;
+  #pragma omp parallel for num_threads(nthreads)
+  {
+    // update w
+    #pragma omp for private(w_mean, w_var, OLD(w), TMP(w), w_diff, update_err) reduction(+:nan_cntr_w_, inf_cntr_w_)
+    for (uint i = 0; i < tdata->nrow(); i++)
+    {
+      end = tdata->row_idx[i+1];
+      w_mean = 0;
+      w_var  = 0;
+      OLD(w) = w[i];
+      TMP(w) = w[i];
+      g = meta->attr_group[i];
+      update_err = true;
+
+      //update w[i]
+      for (j = tdata->row_idx[i]; j < end; ++j)
+      {
+        val_ = tdata->value[j];
+        w_mean += errs(omp_get_thread_num(), tdata->col_idx[j]) * val_ - TMP(w) * val_ * val_;
+        w_var += val_ * val_;
+      }
+
+      w_var = (double) 1.0 / (w_lambda + alpha * w_var);
+      w_mean = - w_var * (alpha * w_mean - w_mu[g] * w_lambda[g]);
+
+      if (R_IsNaN(w_var) || w_var == R_PosInf || w_var == R_NegInf) {
+        TMP(w) = 0.0;
+      } else {
+        if (do_sample) {
+          TMP(w) = Rf_rnorm(w_mean, w_var);
+        } else {
+          TMP(w) = w_mean;
+        }
+      }
+
+      CHECK_PARAM(w, update_err = false);
+      w = TMP(w);
+
+      if (update_err) {
+        w_diff = OLD(w) - w;
+        for (j = tdata->row_idx[i]; j < end; ++j)
+        {
+          errs(omp_get_thread_num(), tdata->col_idx[j]) -= tdata->value[j] * w_diff; //partially update errors in parallel run type
+        }
+      }
+    }
+
+    // completely update errors
+    #pragma omp for private(tot_reduce, error_, j)
+    for (uint i = 0; i < error.size(); ++i)
+    {
+      tot_reduce = 0;
+      error_ = error[i];
+      for (j = 0; j < actual_num_threads; ++j)
+      {
+        tot_reduce += error_ - errs(j,i);
+      }
+      error[i] -= tot_reduce;
+    }
+  }
+}
+
+void MCMC_ALS_Learner::update_v(Data& train, DVector<double>& error, DVector<double>& v_q)
+{
+  SMatrix<float>* tdata = train.data_t;
+
+  double v_mean, v_var, OLD(v), TMP(v), v_diff, h;
+  float val_;
+  uint end, m, idx_, g;
+  bool update_err;
+
+  for (uint f = 0; f < fm->num_factor; ++f)
+  {
+    // init v_q
+    v_q.init(0.0);
+
+    #pragma omp parallel num_threads(nthreads)
+    {
+      // update v_q
+      #pragma omp for private(end, TMP(v), j)
+      for (uint i = 0; i < tdata->nrow(); ++i)
+      {
+        end = tdata->row_idx[i+1];
+        TMP(v) = v(f, i);
+        for (uint j = tdata->row_idx[i]; j < end; ++j)
+        {
+          v_q[tdata->col_idx[j]] += tdata->value[j] * TMP(v);
+        }
+      }
+
+      //update v(f,:)
+      #pragma omp for private(v_mean, v_var, TMP(v), OLD(v), v_diff, h, val_, end, m, idx_, g, update_err) private(v_q, error)
+      for (i = 0; i < tdata->nrow(); ++i)
+      {
+        // update v(f, i)
+        v_mean = 0;
+        v_var = 0;
+        OLD(v) = v(f, i);
+        TMP(v) = v(f, i);
+        end = tdata->row_idx[i+1];
+        g = meta->attr_group[i];
+        for (m = tdata->row_idx[i]; m < end; ++m)
+        {
+          val_ = tdata->value[m];
+          idx_ = tdata->col_idx[m];
+          h = val_ * v_q[idx_] - val_ * val_ * TMP(v);
+          v_mean += h * error[idx_];
+          v_var  += h * h;
+        }
+        v_mean -= TMP(v) * v_var;
+        v_var = (double) 1.0 / (v_lambda + alpha * v_var);
+        v_mean = - v_var * (alpha * v_mean - v_mu(f, g) * v_lambda(f, g));
+
+        if (R_IsNaN(v_var) || v_var == R_PosInf || v_var == R_NegInf) {
+          TMP(v) = 0.0;
+        } else {
+          if (do_sample) {
+            TMP(v) = Rf_rnorm(v_mean, std::sqrt(v_var));
+          } else {
+            TMP(v) = v_mean;
+          }
+        }
+
+        CHECK_PARAM(v, update_err = false);
+        v(f, i) = TMP(v);
+
+        v_diff = OLD(v) - TMP(v);
+        if (update_err) {
+          for (m = tdata->row_idx[i]; m < end; ++m)
+          {
+            val_ = tdata->value[m];
+            h = val_ * v_q[tdata->col_idx[m]] - val_ * val_ * OLD(v);
+            v_q[tdata->col_idx[m]] -= val_ * v_diff; //updated partially, only when hthreads = 1 then v_q will be completely and serially updated
+            error[tdata->col_idx[m]] -= h * v_diff;  //like v_q TODO: test rate of convergence under parallel run
+          }
+        }
+      }
+    }
+  }
+}
+
+
+/***
+* update hyper parameters
+*/
+void MCMC_ALS_Learner::update_alpha(Data& train, DVector<double>& error)
+{
+  if (! do_multilevel) {
+    alpha = alpha_0;
+    return;
+  }
+
+  double alpha_n = alpha_0 + train.num_cases;
+  double gamma_n = gamma_0;
+  #pragma omp parallel for num_threads(nthreads) reduction(+:gamma_n)
+  for (uint i = 0; i < data.num_cases; ++i)
+  {
+    gamma_n += error[i] * error[i];
+  }
+
+  double OLD(alpha) = alpha;
+  double TMP(alpha);
+  TMP(alpha) = Rf_rgamma(alpha_n / 2.0, gamma_n / 2.0);
+
+  CHECK_PARAM(alpha,);
+  alpha = TMP(alpha);
+}
+
+
+void MCMC_ALS_Learner::update_w_mu()
+{
+  if (! do_multilevel) {
+    w_mu.init(mu_0);
+    return;
+  }
+
+  DVector<double>& w_mu_mean = cache_for_group_values;
+  w_mu_mean.init(0.0);
+  for (uint i = 0; i < fm->num_attribute; ++i)
+  {
+    w_mu_mean[meta->attr_group[i]] += w[i];
+  }
+
+  for (uint g = 0; g < meta->num_attr_groups; ++g)
+  {
+    w_mu_mean[g] = (w_mu_mean[g] + beta_0 * mu_0) / (meta->num_attr_per_group[g] + beta_0);
+    double w_mu_var = (double) 1.0 / ((meta->num_attr_per_group[g] + beta_0) * w_lambda[g]);
+    double TMP(w_mu);
+    double OLD(w_mu) = w_mu[g];
+    if (do_sample) {
+      TMP(w_mu) = Rf_rnorm(w_mu_mean[g], std::sqrt(w_mu_var));
+    } else {
+      TMP(w_mu) = w_mu_mean[g];
+    }
+
+    CHECK_PARAM(w_mu,);
+    w_mu[g] = TMP(w_mu);
+  }
+}
+
+
+void MCMC_ALS_Learner::update_w_lambda()
+{
+  if (! do_multilevel) { return; }
+
+  DVector<double>& w_lambda_gamma = cache_for_group_values;
+  w_lambda_gamma.init(0.0);
+
+  for (uint i = 0; i < fm->num_attribute; ++i)
+  {
+    w_lambda_gamma[meta->attr_group[i]] += (w[i] - w_mu[g]) * (w[i] - w_mu[g]);
+  }
+
+  for (uint g = 0; g < meta->num_attr_groups; ++g)
+  {
+    w_lambda_gamma[g] += beta_0 * (w_mu[g] - mu_0) * (w_mu[g] - mu_0) + gamma_0;
+    double w_lambda_alpha = alpha_0 + meta->num_attribute[g] + 1;
+    double TMP(w_lambda);
+    double OLD(w_lambda) = w_lambda[g];
+
+    if (do_sample) {
+      TMP(w_lambda) = Rf_rgamma(w_lambda_alpha / 2.0, w_lambda_gamma[g] / 2.0);
+    } else {
+      TMP(w_lambda) = w_lambda_alpha / w_lambda_gamma[g];
+    }
+
+    CHECK_PARAM(w_lambda);
+    w_lambda[g] = TMP(w_lambda);
+  }
+}
+
+
+void MCMC_ALS_Learner::update_v_mu()
+{
+  if (! do_multilevel) {
+    v_mu.init(mu_0);
+    return;
+  }
+
+  DVector<double>& v_mu_mean = cache_for_group_values;
+
+  for (uint f = 0; f < fm->num_factor; ++f)
+  {
+    v_mu_mean.init(0.0);
+    for (uint i = 0; i < fm->num_attribute; ++i)
+    {
+      v_mu_mean[meta->attr_group[i]] += fm->v(f, meta->attr_group[i]);
+    }
+
+    for (uint g = 0; g < meta->num_attr_groups; ++g)
+    {
+      v_mu_mean[g] = (v_mu_mean(g) + beta_0 * mu_0) / (meta->num_attr_per_group(g) + beta_0);
+      double v_mu_var = double (1.0) / ((meta->num_attr_per_group(g) + beta_0) * v_lambda(g,f));
+
+      double TMP(v_mu);
+      double OLD(v_mu) = v_mu(g, f);
+
+      if (do_sample) {
+        TMP(v_mu) = Rf_rnorm(v_mu_mean[g], std::sqrt(v_mu_var));
+      } else {
+        TMP(v_mu) = v_mu_mean[g];
+      }
+
+      CHECK_PARAM(v_mu,);
+      v_mu(g, f) = TMP(v_mu);
+    }
+  }
+}
+
+
+void MCMC_ALS_Learner::update_v_lambda()
+{
+  if (! do_multilevel) { return; }
+  DVector<double>& v_lambda_gamma = cache_for_group_values;
+
+  for (uint f = 0; f < fm->num_factor; ++f)
+  {
+    v_lambda_gamma.init(0.0);
+    for (uint i = 0; i < fm->num_attribute; ++i)
+    {
+      uint g = meta->attr_group[i];
+      v_lambda_gamma[g] += (fm->v(f,i) - v_mu(g,f)) * (fm->v(f,i) - v_mu(g,f));
+    }
+
+    for (uint g = 0; g < meta->num_attr_groups; ++g)
+    {
+      v_lambda_gamma[g] += beta_0 * (v_mu(g, f) - mu_0) * (v_mu(g, f) - mu_0) + gamma_0;
+      double v_lambda_alpha = alpha_0 + meta->num_attr_per_group[g] + 1;
+      double TMP(v_lambda);
+      double OLD(v_lambda) = v_lambda(g, f);
+
+      if (do_sample) {
+        TMP(v_lambda) = Rf_rgamma(v_lambda_alpha / 2.0, v_lambda_gamma[g] / 2.0);
+      } else {
+        TMP(v_lambda) = v_lambda_alpha / v_lambda_gamma[g];
+      }
+
+      CHECK_PARAM(v_lambda,);
+      v_lambda(g, f) = TMP(v_lambda);
+    }
+  }
+}
+
+
+void MCMC_ALS_Learner::calculate_error(Data& data, DVector<double>& error)
+{
+  if (TASK == REGRESSION) {
+    #pragma omp parallel for num_threads(nthreads)
+    for (uint i = 0; i < data.num_cases; ++i)
+    {
+      error[i] -= data.target[i];
+    }
+  } else if (TASK == CLASSIFICATION) {
+    double TMP(error), phi_minus_mu, Phi_minus_mu;
+    if (do_sample) {
+      #pragma omp parallel for num_threads(nthreads) private(TMP(error))
+      for (uint i = 0; i < data.num_cases; ++i)
+      {
+        TMP(error) = error[i];
+        if (data.target[i] >= 0.0) {
+          error[i] -= fast_trnorm_left(0.0, TMP(error), 1.0);
+        } else {
+          error[i] -= fast_trnorm_right(0.0, TMP(error), 1.0);
+        }
+      }
+    } else {
+      #pragma omp parallel for num_threads(nthreads) private(TMP(error), phi_minus_mu, Phi_minus_mu)
+      for (uint i = 0; i < data.num_cases; ++i)
+      {
+        TMP(error) = error[i];
+        phi_minus_mu = exp(-TMP(error) * TMP(error) / 2.0) / SQRT2PI;
+        Phi_minus_mu = fast_pnorm(-TMP(error));
+        if (data.target[i] >= 0.0) {
+          error[i] = -phi_minus_mu / (1 - Phi_minus_mu);
+        } else {
+          error[i] = phi_minus_mu / Phi_minus_mu;
+        }
+      }
+    }
+  } else {
+    stop("unknown task...");
+  }
+}
 
 #endif
