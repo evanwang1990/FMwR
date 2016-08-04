@@ -4,6 +4,7 @@
 #include <vector>
 #include <string.h>
 #include <assert.h>
+#include "Dvector.h"
 
 template <typename T> class DMatrix
 {
@@ -56,6 +57,16 @@ public:
   {
     if ((dim1 != v.dim1) && (dim2 != v.dim2)) { setSize(v.dim1, v.dim2); }
     for (T *it0 = this->begin(), *it1 = v.begin(); it0 != this->end(); ++it0, ++it1) { *it0 = *it1; }
+  }
+
+  void assign_by_row(DVector<T>& v)
+  {
+    if ((dim2 != v.size())) { setSize(dim1, v.size()); }
+    for (T *it0 = this->begin(), *it1 = v.begin(); it0 != this->end(); ++it0, ++it1)
+    {
+      if (it1 == v.end()) { it1 = v.begin(); }
+      *it0 = *it1;
+    }
   }
 
   T& operator() (uint x, uint y) { return value[x][y]; }
