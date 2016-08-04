@@ -20,7 +20,8 @@ public:
     : num_attr_groups(1)
   {
     attr_group.setSize(num_attributes);
-    num_attr_per_group.setSize(num_attributes);
+    attr_group.init(0);
+    num_attr_per_group.setSize(num_attr_groups);
     num_attr_per_group[0] = num_attributes;
   }
 };
@@ -28,67 +29,67 @@ public:
 
 
 
-class RelationData
-{
-protected:
-  bool has_x, has_xt;
-
-public:
-  DataMetaInfo* meta;
-  SMatrix<float>* data;
-  SMatrix<float>* data_t;
-  uint num_features;
-  uint num_cases;
-  uint attr_offset;
-
-public:
-  RelationData()
-    : data(NULL), data_t(NULL), has_x(false), has_xt(false), meta(NULL)
-  {}
-
-  void load(List matrix)
-  {
-    if (matrix.attr("class") != "SMatrix")
-      stop("the data to be loaded is not SMatrix format");
-
-    if (matrix.attr("transposed") == true)
-    {
-      has_xt = true;
-      data_t = new SMatrix<float>(matrix);
-      num_features = data_t.nrow();
-      num_cases = data_t.ncol();
-    }
-    else
-    {
-      has_x  = true;
-      data = new SMatrix<float>(matrix);
-      num_features = data.ncol();
-      num_cases = data.nrow();
-    }
-
-    if (has_x && has_xt)
-    {
-      if (data_t.ncol() != data.nrow()) { stop("data's rows not equal to data_t's columns..."); }
-      if (data_t.nrow() != data.ncol()) { stop("data's columns not equal to data_t's rows..."); }
-      if (data_t.nvalues() != data.nvalues()) { stop("data's values not equal to data_t's value"); }
-    }
-
-    if (!has_x && !has_xt)
-      meta = new DataMetaInfo(num_features);
-  }
-};
-
-
-
-class RelationJoin
-{
-public:
-  DVector<uint> data_row_to_relation_row;
-  RelationData* data;
-
-public:
-  RelationJoin() {}
-};
+// class RelationData
+// {
+// protected:
+//   bool has_x, has_xt;
+//
+// public:
+//   DataMetaInfo* meta;
+//   SMatrix<float>* data;
+//   SMatrix<float>* data_t;
+//   uint num_features;
+//   uint num_cases;
+//   uint attr_offset;
+//
+// public:
+//   RelationData()
+//     : data(NULL), data_t(NULL), has_x(false), has_xt(false), meta(NULL)
+//   {}
+//
+//   void load(List matrix)
+//   {
+//     if (matrix.attr("class") != "SMatrix")
+//       stop("the data to be loaded is not SMatrix format");
+//
+//     if (matrix.attr("transposed") == true)
+//     {
+//       has_xt = true;
+//       data_t = new SMatrix<float>(matrix);
+//       num_features = data_t.nrow();
+//       num_cases = data_t.ncol();
+//     }
+//     else
+//     {
+//       has_x  = true;
+//       data = new SMatrix<float>(matrix);
+//       num_features = data.ncol();
+//       num_cases = data.nrow();
+//     }
+//
+//     if (has_x && has_xt)
+//     {
+//       if (data_t.ncol() != data.nrow()) { stop("data's rows not equal to data_t's columns..."); }
+//       if (data_t.nrow() != data.ncol()) { stop("data's columns not equal to data_t's rows..."); }
+//       if (data_t.nvalues() != data.nvalues()) { stop("data's values not equal to data_t's value"); }
+//     }
+//
+//     if (!has_x && !has_xt)
+//       meta = new DataMetaInfo(num_features);
+//   }
+// };
+//
+//
+//
+// class RelationJoin
+// {
+// public:
+//   DVector<uint> data_row_to_relation_row;
+//   RelationData* data;
+//
+// public:
+//   RelationJoin() {}
+// };
 
 
 class Data
@@ -100,7 +101,7 @@ public:
   SMatrix<float>* data_t;
   SMatrix<float>* data;
   DVector<float>* target;
-  DVector<RelationJoin> relation;
+  // DVector<RelationJoin> relation;
 
 public:
   uint num_features;
@@ -137,8 +138,6 @@ public:
       if (data_t->nvalues() != data->nvalues()) { stop("data's values not equal to data_t's value"); }
     }
 
-    if (!has_x && !has_xt)
-      meta = new DataMetaInfo(num_features);
   }
 
   void add_target(DVector<float>* _target)
@@ -154,3 +153,6 @@ public:
     }
   }
 };
+
+
+#endif
