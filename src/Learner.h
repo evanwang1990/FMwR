@@ -2,28 +2,20 @@
 #define FM_LEARN__
 
 #include <Rcpp.h>
+#include "util/Macros.h"
+#include "util/Smatrix.h"
 #include "Data.h"
 #include "Model.h"
 using namespace Rcpp;
 
 class Learner
 {
-protected:
-  // DVector<double> sum, sum_sqr;
-  // DMatrix<double> pred_q_term;
-
-protected:
-  virtual double predict_case(SMatrix<float>::Iterator it)
-  {
-    return fm->predict(SMatrix<float>::Iterator it)
-  }
-
 public:
   DataMetaInfo* meta;
   Data* validation;
   Model* fm;
-  float min_target;
-  float max_target;
+  double min_target;
+  double max_target;
   int nthreads;
 
 public:
@@ -43,28 +35,33 @@ public:
 
   virtual void learn(Data& train, Data& test) {}
 
-  virtual void predict(Data& data, DVector<double>& out) = 0;
+  virtual void learn(Data& train) {}
 
-  virtual double evaluate(data& data)
+  // virtual void predict(Data& data, DVector<double>& out) = 0;
+
+  virtual double evaluate(Data& data)
   {
     if (data.data == NULL) { stop("there's no data..."); }
     if (TASK == CLASSIFICATION) { return evaluate_classification(data); }
     else if (TASK == REGRESSION) { return evaluate_regression(data); }
     else { stop("unknown task..."); }
+    return R_NegInf;
   }
 
 public:
   virtual double evaluate_classification(Data& data) //TODO: add threshold??
   {
-    uint num_correct = 0;
-    uint num_cases = data.data->nrow();
-    double p;
+    SMatrix<float>* pdata = data.data;
+    DVector<float>* ptarget = data.target;
+    uint num_cases = pdata->nrow();
+    DVector<double> p(num_cases);
+    fm->predict_batch(data, p);
 
+    uint num_correct = 0;
     #pragma omp parallel for num_threads(nthreads) private(p) reduction(+:num_correct)
     for (uint i = 0; i < num_cases; ++i)
     {
-      p = predict_case(Matrix<float>::Iterator it(data.data, i));
-      if ( ((p >= 0) && (data.target[i] >= 0)) || ((p < 0) && (data.target[i] < 0)) )
+      if ( ((p[i] >= 0) && ((*ptarget)[i] >= 0)) || ((p[i] < 0) && ((*ptarget)[i] < 0)) )
       { num_correct += 1; }
     }
     return (double)num_correct / (double)num_cases;
@@ -72,17 +69,21 @@ public:
 
   virtual double evaluate_regression(Data& data)
   {
+    SMatrix<float>* pdata = data.data;
+    DVector<float>* ptarget = data.target;
+    uint num_cases = pdata->nrow();
+    DVector<double> p(num_cases);
+    fm->predict_batch(data, p);
+
     double rmse_sum_sqr = 0.0;
     double mae_sum_abs = 0.0; //TODO: not used
     double y_hat, err;
-    uint num_cases = data.data->nrow();
-
     #pragma omp parallel for num_threads(nthreads) private(y_hat) private(err) reduction(+:rmse_sum_sqr) reduction(+:mae_sum_abs)
     for (uint i = 0; i < num_cases; ++i)
     {
-      y_hat = predict_case(Matrix<float>::Iterator it(data.data, i));
-      y_hat = max(min(y_hat, max_target), min_target);
-      err = y_hat - data.target[i];
+      y_hat = std::min(p[i], max_target);
+      y_hat = std::max(y_hat, min_target);
+      err = y_hat - (*ptarget)[i];
       rmse_sum_sqr += err * err;
       mae_sum_abs  += abs(err);
     }
