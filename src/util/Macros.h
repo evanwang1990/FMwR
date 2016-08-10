@@ -1,6 +1,9 @@
 #ifndef TOOL_H_
 #define TOOL_H_
 
+// define data type for windows
+#define unsigned int uint
+
 // some const value
 #define SQRT2PI 2.5066282746310002
 
@@ -15,12 +18,12 @@
 
 #define CHECK_PARAM(_X_, _ACTION_)                             \
 {                                                              \
-  if (R_IsNaN(_X_)) {                                          \
-    _X_ = _X_##_old;                                           \
+  if (R_IsNaN(TMP(_X_))) {                                     \
+    TMP(_X_) = OLD(_X_);                                       \
     _ACTION_;}                                                 \
                                                                \
-  if (_X_ == R_PosInf || _X_ == R_NegInf) {                    \
-    _X_ = _X_##_old;                                           \
+  if (TMP(_X_) == R_PosInf || TMP(_X_) == R_NegInf) {          \
+    TMP(_X_) = OLD(_X_);                                       \
     _ACTION_;}                                                 \
 }
 
@@ -34,8 +37,8 @@
 #define CNTR_WARNING(_X_)                                      \
 {                                                              \
   if (nan_cntr_##_X_ > 0 || inf_cntr_##_X_ > 0) {              \
-    cout<<"nans in "<<#_X_<<": "<<nan_cntr_##_X_<<"\t";       \
-    cout<<"infs in "<<#_X_<<": "<<inf_cntr_##_X_<<endl;       \
+    cout<<"nans in "<<#_X_<<": "<<nan_cntr_##_X_<<"\t";        \
+    cout<<"infs in "<<#_X_<<": "<<inf_cntr_##_X_<<endl;        \
   }                                                            \
 }
 
