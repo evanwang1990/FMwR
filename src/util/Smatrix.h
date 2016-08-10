@@ -24,7 +24,7 @@ public:
 
   SMatrix(List& _list) //TODO:统一数据类型
   {
-    if (as<string>(_list.attr("class")) != "SMatrix") { stop("The input is not SMatrix type..."); }
+    if (as<String>(_list.attr("class")) != "SMatrix") { stop("The input is not SMatrix type..."); }
     transposed             = as<bool>(_list.attr("transposed"));
     IntegerVector dim      = _list["dim"];
     dim1                   = dim[0];
