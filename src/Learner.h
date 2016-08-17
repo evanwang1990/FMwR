@@ -2,6 +2,7 @@
 #define FM_LEARN__
 
 #include <Rcpp.h>
+#include <omp.h>
 #include "util/Macros.h"
 #include "util/Smatrix.h"
 #include "Data.h"
@@ -18,11 +19,11 @@ public:
   double max_target;
   int nthreads;
 
-public:
-  int TASK;
+// public:
+//   int TASK;
 
 public:
-  Learner(): TASK(CLASSIFICATION), meta(NULL), nthreads(1) {}
+  Learner(): meta(NULL), nthreads(1) {}
 
   ~Learner() {}
 
@@ -42,8 +43,8 @@ public:
   virtual double evaluate(Data& data)
   {
     if (data.data == NULL) { stop("there's no data..."); }
-    if (TASK == CLASSIFICATION) { return evaluate_classification(data); }
-    else if (TASK == REGRESSION) { return evaluate_regression(data); }
+    if (fm->TASK == CLASSIFICATION) { return evaluate_classification(data); }
+    else if (fm->TASK == REGRESSION) { return evaluate_regression(data); }
     else { stop("unknown task..."); }
     return R_NegInf;
   }
