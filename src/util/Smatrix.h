@@ -133,6 +133,13 @@ public:
     value = matrix.value[pointer];
   }
 
+  void reset()
+  {
+    pointer = begin;
+    index   = matrix.col_idx[pointer];
+    value   = matrix.value[pointer];
+  }
+
 };
 
 
