@@ -2,6 +2,7 @@
 #define MCMC_ALS_H_
 
 #include <Rcpp.h>
+#include <omp.h>
 #include "util/Macros.h"
 #include "util/Random.h"
 #include "util/Dvector.h"
@@ -43,12 +44,15 @@ protected:
 
   void update_w0(Data& train, DVector<double>& error);
   void update_w(Data& train, DVector<double>& error);
-  void update_v(Data& train, DVector<double> error, DVector<double> v_q);
+  void update_v(Data& train, DVector<double>& error, DVector<double>& v_q);
 
   void calculate_error(Data& data, DVector<double>& error);
 
 public:
-  virtual void predict(Data& data, DVector<double>& out);
+  // virtual void predict(Data& data, DVector<double>& out);
+  MCMC_ALS_Learner() : Learner() {}
+  ~MCMC_ALS_Learner() {}
+
   virtual void init();
   virtual void learn(Data& train);
 };
@@ -86,10 +90,9 @@ void MCMC_ALS_Learner::learn(Data& train)
   DVector<double> v_q(train.num_cases);
   // DVector<double> test_err(test.num_cases);
 
-  for (; iter_cntr < max_iter; ++iter_cntr)
+  for (; iter_cntr < max_iter; ++iter_cntr)  //TODO 加入收敛准则
   {
     fm->predict_batch(train, train_err);
-    // fm->predict_batch(test, test_err);
     calculate_error(train, train_err);
     update_all(train, train_err, v_q);
   }
@@ -161,15 +164,14 @@ void MCMC_ALS_Learner::update_w(Data& train, DVector<double>& error)
   DVectorDouble& w = fm->w;
 
   omp_set_num_threads(nthreads);
-  int actual_num_threads = omp_get_num_threads();
   // set arrays to store the updated errors under each thread
-  DMatrix<double> errs(actual_num_threads, error.size());
+  DMatrix<double> errs(nthreads, error.size());
   errs.assign_by_row(error);
 
   double w_mean, w_var, OLD(w), TMP(w), w_diff, tot_reduce, error_, val_;
   uint j, g, end;
   bool update_err;
-  #pragma omp parallel num_threads(nthreads)
+  #pragma omp parallel
   {
     // update w
     #pragma omp for private(w_mean, w_var, OLD(w), TMP(w), w_diff, update_err, end)
@@ -222,7 +224,7 @@ void MCMC_ALS_Learner::update_w(Data& train, DVector<double>& error)
     {
       tot_reduce = 0;
       error_ = error[i];
-      for (j = 0; j < (uint)actual_num_threads; ++j)
+      for (j = 0; j < (uint)nthreads; ++j)
       {
         tot_reduce += error_ - errs(j,i);
       }
@@ -231,25 +233,25 @@ void MCMC_ALS_Learner::update_w(Data& train, DVector<double>& error)
   }
 }
 
-void MCMC_ALS_Learner::update_v(Data& train, DVector<double> error, DVector<double> v_q) // error v_q 需要在private中申明,并且后续不需要更新,所以不能用引用
+void MCMC_ALS_Learner::update_v(Data& train, DVector<double>& error_, DVector<double>& v_q_)
 {
   SMatrix<float>* tdata = train.data_t;
   DMatrixDouble& v = fm->v;
+  DVector<double> error; error.assign(error_);
+  DVector<double> v_q;   v_q.assign(v_q_);
 
   double v_mean, v_var, OLD(v), TMP(v), v_diff, h;
   float val_;
   uint end, m, idx_, g, j;
   bool update_err;
-
   for (uint f = 0; f < fm->num_factor; ++f)
   {
     // init v_q
     v_q.init(0.0);
-
-    #pragma omp parallel num_threads(nthreads)
+    // #pragma omp parallel num_threads(nthreads)
     {
       // update v_q
-      #pragma omp for private(end, TMP(v), j)
+      // #pragma omp for private(end, TMP(v), j)
       for (uint i = 0; i < tdata->nrow(); ++i)
       {
         end = tdata->row_idx[i+1];
@@ -261,12 +263,13 @@ void MCMC_ALS_Learner::update_v(Data& train, DVector<double> error, DVector<doub
       }
 
       //update v(f,:)
-      #pragma omp for private(v_mean, v_var, TMP(v), OLD(v), v_diff, h, val_, end, m, idx_, g, update_err) private(v_q, error)
+      // #pragma omp for private(v_mean, v_var, TMP(v), OLD(v), v_diff, h, val_, end, m, idx_, g, update_err) private(v_q, error)
       for (uint i = 0; i < tdata->nrow(); ++i)
       {
         // update v(f, i)
         v_mean = 0;
         v_var = 0;
+        update_err = true;
         OLD(v) = v(f, i);
         TMP(v) = v(f, i);
         end = tdata->row_idx[i+1];
@@ -280,8 +283,9 @@ void MCMC_ALS_Learner::update_v(Data& train, DVector<double> error, DVector<doub
           v_var  += h * h;
         }
         v_mean -= TMP(v) * v_var;
-        v_var = (double) 1.0 / (v_lambda(f, g) + alpha * v_var);
-        v_mean = - v_var * (alpha * v_mean - v_mu(f, g) * v_lambda(f, g));
+        v_var = (double) 1.0 / (v_lambda(g, f) + alpha * v_var);
+        v_mean = - v_var * (alpha * v_mean - v_mu(g, f) * v_lambda(g, f));
+
 
         if (R_IsNaN(v_var) || v_var == R_PosInf || v_var == R_NegInf) {
           TMP(v) = 0.0;
@@ -295,7 +299,6 @@ void MCMC_ALS_Learner::update_v(Data& train, DVector<double> error, DVector<doub
 
         CHECK_PARAM(v, update_err = false);
         v(f, i) = TMP(v);
-
         v_diff = OLD(v) - TMP(v);
 
         // update error
@@ -303,9 +306,10 @@ void MCMC_ALS_Learner::update_v(Data& train, DVector<double> error, DVector<doub
           for (m = tdata->row_idx[i]; m < end; ++m)
           {
             val_ = tdata->value[m];
-            h = val_ * v_q[tdata->col_idx[m]] - val_ * val_ * OLD(v);
-            v_q[tdata->col_idx[m]] -= val_ * v_diff; //updated partially, only when hthreads = 1 then v_q will be completely and serially updated
-            error[tdata->col_idx[m]] -= h * v_diff;  //like v_q TODO: test rate of convergence under parallel run
+            idx_ = tdata->col_idx[m];
+            h = val_ * v_q[idx_] - val_ * val_ * OLD(v);
+            v_q[idx_] -= val_ * v_diff; //updated partially, only when hthreads = 1 then v_q will be completely and serially updated
+            error[idx_] -= h * v_diff;  //like v_q TODO: test rate of convergence under parallel run
           }
         }
       }
@@ -480,13 +484,13 @@ void MCMC_ALS_Learner::update_v_lambda()
 
 void MCMC_ALS_Learner::calculate_error(Data& data, DVector<double>& error)
 {
-  if (TASK == REGRESSION) {
+  if (fm->TASK == REGRESSION) {
     #pragma omp parallel for num_threads(nthreads)
     for (uint i = 0; i < data.num_cases; ++i)
     {
       error[i] -= data.target->get(i);
     }
-  } else if (TASK == CLASSIFICATION) {
+  } else if (fm->TASK == CLASSIFICATION) {
     double TMP(error), phi_minus_mu, Phi_minus_mu;
     if (do_sample) {
       #pragma omp parallel for num_threads(nthreads) private(TMP(error))
@@ -494,9 +498,11 @@ void MCMC_ALS_Learner::calculate_error(Data& data, DVector<double>& error)
       {
         TMP(error) = error[i];
         if (data.target->get(i) >= 0.0) {
-          error[i] -= fast_trnorm_left(0.0, TMP(error), 1.0);
+          error[i] -= fast_trnorm_left(TMP(error), 0.0, 1.0);
+          // error[i] -= fast_trnorm_left(0.0, TMP(error), 1.0);
         } else {
-          error[i] -= fast_trnorm_right(0.0, TMP(error), 1.0);
+          error[i] -= fast_trnorm_right(TMP(error), 0.0, 1.0);
+          // error[i] -= fast_trnorm_right(0.0, TMP(error), 1.0);
         }
       }
     } else {
@@ -504,12 +510,14 @@ void MCMC_ALS_Learner::calculate_error(Data& data, DVector<double>& error)
       for (uint i = 0; i < data.num_cases; ++i)
       {
         TMP(error) = error[i];
-        phi_minus_mu = exp(-TMP(error) * TMP(error) / 2.0) / SQRT2PI;
-        Phi_minus_mu = fast_pnorm(-TMP(error));
+        // phi_minus_mu = exp(-TMP(error) * TMP(error) / 2.0) / SQRT2PI;
+        // Phi_minus_mu = fast_pnorm(-TMP(error));
         if (data.target->get(i) >= 0.0) {
-          error[i] = -phi_minus_mu / (1 - Phi_minus_mu);
+          // error[i] = -phi_minus_mu / (1 - Phi_minus_mu);
+          error[i] = - fast_dpnorm(-TMP(error)); //v初始值很大时能很快收敛,比libFM中计算速度快6倍左右
         } else {
-          error[i] = phi_minus_mu / Phi_minus_mu;
+          // error[i] = phi_minus_mu / Phi_minus_mu;
+          error[i] = fast_dpnorm(TMP(error));
         }
       }
     }
@@ -521,29 +529,27 @@ void MCMC_ALS_Learner::calculate_error(Data& data, DVector<double>& error)
 class MCMC_Learner: public MCMC_ALS_Learner
 {
 public:
-  MCMC_Learner();
-  ~MCMC_Learner();
+  MCMC_Learner()
+    : MCMC_ALS_Learner()
+  {
+    do_sample = true;
+    do_multilevel = true;
+  }
+
+  ~MCMC_Learner() {}
 };
 
 class ALS_Learner: public MCMC_ALS_Learner
 {
 public:
-  ALS_Learner();
-  ~ALS_Learner();
+  ALS_Learner()
+    : MCMC_ALS_Learner()
+  {
+    do_sample = false;
+    do_multilevel = false;
+  }
+
+  ~ALS_Learner() {}
 };
-
-MCMC_Learner::MCMC_Learner()
-  : MCMC_ALS_Learner()
-{
-  do_sample = true;
-  do_multilevel = true;
-}
-
-ALS_Learner::ALS_Learner()
-  : MCMC_ALS_Learner()
-{
-  do_sample = false;
-  do_multilevel = false;
-}
 
 #endif

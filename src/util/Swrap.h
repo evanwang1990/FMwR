@@ -1,9 +1,11 @@
+#ifndef SWRAP_H_
+#define SWRAP_H_
+
 #include <Rcpp.h>
 
 using namespace Rcpp;
 using namespace std;
 
-typedef unsigned long long int uint64;
 
 List as_SMatrix1(NumericMatrix data, bool transpose);
 List as_SMatrix2(NumericMatrix data, bool transpose);
@@ -27,7 +29,7 @@ List as_SMatrix1(NumericMatrix data, bool transpose)
   int nr = data.nrow(), nc = data.ncol();
   vector<double> value(nr*nc);
   vector<int> col_idx(nr*nc);
-  vector<int> row_size(nr);
+  vector<int> row_size(transpose ? nc : nr);
 
   NumericMatrix::iterator it_data = data.begin();
   vector<double>::iterator it_value = value.begin();
@@ -83,7 +85,7 @@ List as_SMatrix1(NumericMatrix data, bool transpose)
     _["value"] = value,
     _["col_idx"] = col_idx,
     _["row_size"] = row_size,
-    _["dim"] = IntegerVector::create(nr, nc),
+    _["dim"] = IntegerVector::create(transpose ? nc:nr, transpose ? nr:nc),
     _["size"] = k
   );
 }
@@ -92,7 +94,7 @@ List as_SMatrix1(NumericMatrix data, bool transpose)
 List as_SMatrix2(NumericMatrix data, bool transpose)
 {
   int nr = data.nrow(), nc = data.ncol();
-  vector<int> row_size(nr);
+  vector<int> row_size(transpose ? nc : nr);
   uint size = 0;
   NumericMatrix::iterator it_data = data.begin();
   vector<double> value(nr*nc);
@@ -150,7 +152,9 @@ List as_SMatrix2(NumericMatrix data, bool transpose)
     _["value"] = value,
     _["col_idx"] = col_idx,
     _["row_size"] = row_size,
-    _["dim"] = IntegerVector::create(nr, nc),
+    _["dim"] = IntegerVector::create(transpose ? nc:nr, transpose ? nr:nc),
     _["size"] = size
   );
 }
+
+#endif

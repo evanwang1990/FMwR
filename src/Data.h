@@ -13,11 +13,10 @@ public:
   DVector<uint> attr_group;
   uint num_attr_groups;
   DVector<uint> num_attr_per_group;
-  uint num_relations;
 
 public:
-  DataMetaInfo(uint num_attributes)
-    : num_attr_groups(1)
+  DataMetaInfo(uint num_attributes, uint num_attr_groups_ = 1)
+    : num_attr_groups(num_attr_groups_)
   {
     attr_group.setSize(num_attributes);
     attr_group.init(0);

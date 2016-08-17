@@ -2,7 +2,7 @@
 #define TOOL_H_
 
 // define data type for windows
-#define unsigned int uint
+typedef unsigned int uint;
 
 // some const value
 #define SQRT2PI 2.5066282746310002
@@ -11,6 +11,12 @@
 #define CLASSIFICATION 10
 #define REGRESSION     20
 #define RANKING        30
+
+// SOLVER
+#define MCMC 100
+#define ALS  200
+#define SGD  300
+
 
 // update parameters
 #define TMP(_X_) _X_##_
