@@ -2,6 +2,7 @@
 #define RANDOM_H_
 
 #include <Rcpp.h>
+#include <time.h>
 #include "Macros.h"
 using namespace Rcpp;
 
@@ -16,6 +17,7 @@ double fast_trnorm_right(double right, double mean, double stdev);
 
 double fast_runif()
 {
+  // srand(123);
   return rand() / ((double)RAND_MAX + 1);
 }
 
@@ -114,6 +116,17 @@ double fast_pnorm(double x)
 
   if (TMP(x) == x) { return res; }
   return 1.0 - res;
+}
+
+// dnorm(x) / (1 - pnorm(x))
+double fast_dpnorm(double x)
+{
+  #include "RandomData_.h"
+  if (x < _MIN_) { return 0.0; }
+  if (x > _MAX_) { return 0.1943369 + 0.9754752 * x + 0.4136861 * sqrt(abs(x)) - 0.5034295 * log(abs(x) + 1e-07); }
+  int i = (int)( (x - _MIN_) * 5000);
+  double w = (x - __X__[i]) * 5000;
+  return w * __Y__[i + 1] + (1.0 - w) * __Y__[i];
 }
 
 #endif
