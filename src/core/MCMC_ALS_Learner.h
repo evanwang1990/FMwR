@@ -3,11 +3,11 @@
 
 #include <Rcpp.h>
 #include <omp.h>
-#include "util/Macros.h"
-#include "util/Random.h"
-#include "util/Dvector.h"
-#include "util/Dmatrix.h"
-#include "util/Smatrix.h"
+#include "../util/Macros.h"
+#include "../util/Random.h"
+#include "../util/Dvector.h"
+#include "../util/Dmatrix.h"
+#include "../util/Smatrix.h"
 #include "Learner.h"
 
 class MCMC_ALS_Learner : public Learner

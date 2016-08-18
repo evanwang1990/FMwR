@@ -3,10 +3,10 @@
 
 #include <Rcpp.h>
 #include <omp.h>
-#include "util/Dvector.h"
-#include "util/Dmatrix.h"
-#include "util/Smatrix.h"
-#include "FTRL_Learner.h"
+#include "../util/Dvector.h"
+#include "../util/Dmatrix.h"
+#include "../util/Smatrix.h"
+#include "Learner.h"
 
 class TDAP_Learner: public Learner
 {

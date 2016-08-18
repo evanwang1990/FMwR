@@ -3,8 +3,8 @@
 
 #include <Rcpp.h>
 #include <omp.h>
-#include "util/Macros.h"
-#include "util/Smatrix.h"
+#include "../util/Macros.h"
+#include "../util/Smatrix.h"
 #include "Data.h"
 #include "Model.h"
 using namespace Rcpp;
@@ -18,9 +18,6 @@ public:
   double min_target;
   double max_target;
   int nthreads;
-
-// public:
-//   int TASK;
 
 public:
   Learner(): meta(NULL), nthreads(1) {}

@@ -1,9 +1,9 @@
 #ifndef DATA_H_
 #define DATA_H_
 
-#include "util/Dvector.h"
-#include "util/Dmatrix.h"
-#include "util/Smatrix.h"
+#include "../util/Dvector.h"
+#include "../util/Dmatrix.h"
+#include "../util/Smatrix.h"
 
 using namespace Rcpp;
 
