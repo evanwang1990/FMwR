@@ -15,6 +15,8 @@ double fast_trnorm_left(double left, double mean, double stdev);
 double fast_trnorm_right(double right);
 double fast_trnorm_right(double right, double mean, double stdev);
 
+uint random_select(int n);
+
 double fast_runif()
 {
   // srand(123);
@@ -127,6 +129,14 @@ double fast_dpnorm(double x)
   int i = (int)( (x - _MIN_) * 5000);
   double w = (x - __X__[i]) * 5000;
   return w * __Y__[i + 1] + (1.0 - w) * __Y__[i];
+}
+
+uint random_select(int n)
+{
+  if (n == 1) {
+    return 1;
+  }  
+  return (uint) (fast_runif() * n + 1);
 }
 
 #endif

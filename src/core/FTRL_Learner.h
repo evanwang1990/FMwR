@@ -6,6 +6,7 @@
 #include "util/Dvector.h"
 #include "util/Dmatrix.h"
 #include "util/Smatrix.h"
+#include "util/Random.h"
 #include "Learner.h"
 
 // just for logistic regression
@@ -30,14 +31,11 @@ public:
   double alpha_v, beta_v;
 
   int max_iter;
-  double sampling_rate;
-
-protected:
-  uint random_select(int n) { return (uint) (fast_runif() * n + 1); }
+  int ramdom_step; //TODO: random_step
 
 public:
   FTRL_Learner()
-    : Learner(), max_iter(3000), l1_regw(0.5), l1_regv(1), l2_regw(0.1), l2_regv(0.5), alpha_w(0.1), alpha_v(0.1), beta_w(1.0), beta_v(1.0), sampling_rate(1.0)
+    : Learner(), max_iter(3000), l1_regw(0.5), l1_regv(1), l2_regw(0.1), l2_regv(0.5), alpha_w(0.1), alpha_v(0.1), beta_w(1.0), beta_v(1.0), ramdom_step(1)
   {}
 
   ~FTRL_Learner() {}
@@ -66,12 +64,11 @@ void FTRL_Learner::learn(Data& train)
   SMatrix<float>* pdata = train.data;
   DVector<float>* target = train.target;
   double y_hat, g, delta;
-  int STEP = (int)(1 / sampling_rate) + 1;
 
   int iter = 0;
   for (;;)
   {
-    for (uint i = random_select(STEP); i < train.num_cases; i += random_select(STEP))
+    for (uint i = random_select(ramdom_step); i < train.num_cases; i += random_select(ramdom_step))
     {
       SMatrix<float>::Iterator it(*pdata, i);
       y_hat = fm->predict(it);
@@ -94,7 +91,6 @@ void FTRL_Learner::learn(Data& train)
           TMP(n_w) += g * g;
           delta = (sqrt(TMP(n_w)) - sqrt(OLD(n_w))) / alpha_w;
           z_w[it.index] += g - delta * fm->w[it.index];
-          // printf("g = %e, delta = %e, w_old = %e, w_new = %e z_diff = %e \n", g, delta, OLD(n_w), TMP(n_w), g - delta * fm->w[it.index]);
         }
       }
 
@@ -131,7 +127,6 @@ void FTRL_Learner::calculate_param()
   for (uint i = 0; i < fm->num_attribute; ++i)
   {
     double TMP(z_w) = z_w[i];
-    // cout<<"l1_regw = "<<l1_regw<<" z_w = "<<TMP(z_w)<<endl;
     if (abs(TMP(z_w)) <= l1_regw) {
       fm->w[i] = 0.0;
     } else {
@@ -146,7 +141,6 @@ void FTRL_Learner::calculate_param()
     for (uint i = 0; i < fm->num_attribute; ++i)
     {
       double TMP(z_v) = z_v(f, i);
-      // cout<<"l1_regv = "<<l1_regv<<" z_v = "<<TMP(z_v)<<endl;
       if (abs(TMP(z_v)) <= l1_regv) {
         fm->v(f, i) = 0.0;
       } else {

@@ -50,10 +50,10 @@ geom_density(aes(x = y_hat2, color = factor(y+10)))
 #include "../Data.h"
 #include "../Model.h"
 #include "../util/Swrap.h"
-#include "../FTRL_Learner.h"
+#include "../TDAP_Learner.h"
 
 // [[Rcpp::export]]
-List test_ftrl(NumericMatrix data_, NumericVector target, int factors, int max_iter, int nthreads, int step)
+List test_tdap(NumericMatrix data_, NumericVector target, int factors, int max_iter, int nthreads, int step)
 {
   // init Data
   List dl = as_SMatrix(data_, false);
@@ -85,7 +85,7 @@ List test_ftrl(NumericMatrix data_, NumericVector target, int factors, int max_i
   DataMetaInfo meta(data.num_features);
 
   // init Learner
-  FTRL_Learner learner;
+  TDAP_Learner learner;
   learner.meta = &meta;
   learner.fm = &fm;
   learner.nthreads = 4;
@@ -94,7 +94,7 @@ List test_ftrl(NumericMatrix data_, NumericVector target, int factors, int max_i
   learner.l2_regw = 1;
   learner.l1_regv = 0.3;
   learner.l2_regv = 0.1;
-  learner.ramdom_step = step;
+  learner.random_step = step;
   learner.init();
 
   // learn model
