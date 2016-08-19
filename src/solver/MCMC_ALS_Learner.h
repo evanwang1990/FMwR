@@ -8,7 +8,8 @@
 #include "../util/Dvector.h"
 #include "../util/Dmatrix.h"
 #include "../util/Smatrix.h"
-#include "Learner.h"
+#include "../core/Learner.h"
+
 
 class MCMC_ALS_Learner : public Learner
 {
@@ -16,7 +17,7 @@ protected:
   DVector<double> cache_for_group_values;
 
 public:
-  uint max_iter;
+  // uint max_iter;
   uint iter_cntr;
   uint num_eval_cases;
 
@@ -30,8 +31,6 @@ public:
 
   bool do_sample;
   bool do_multilevel;
-  // uint nan_cntr_v, nan_cntr_w, nan_cntr_w0, nan_cntr_alpha, nan_cntr_w_mu, nan_cntr_w_lambda, nan_cntr_v_mu, nan_cntr_v_lambda;
-	// uint inf_cntr_v, inf_cntr_w, inf_cntr_w0, inf_cntr_alpha, inf_cntr_w_mu, inf_cntr_w_lambda, inf_cntr_v_mu, inf_cntr_v_lambda;
 
 protected:
   void update_all(Data& train, DVector<double>& error, DVector<double>& v_q);
@@ -82,6 +81,11 @@ void MCMC_ALS_Learner::init()
   v_lambda.init(0.0);
 
   iter_cntr = 0;
+
+  if (tracker.step_size > 0) {
+    tracker.max_iter = max_iter;
+    tracker.init();
+  }
 }
 
 void MCMC_ALS_Learner::learn(Data& train)
@@ -90,9 +94,22 @@ void MCMC_ALS_Learner::learn(Data& train)
   DVector<double> v_q(train.num_cases);
   // DVector<double> test_err(test.num_cases);
 
+  int ii = -1;
   for (; iter_cntr < max_iter; ++iter_cntr)  //TODO 加入收敛准则
   {
     fm->predict_batch(train, train_err);
+    if (tracker.step_size > 0) { // MCMC ALS的valid_step要小于SGD之类
+      ii++;
+      if (ii == tracker.step_size) { ii = 0; }
+      if (ii == 0 || iter_cntr == max_iter - 1) {
+        DVector<double> y_hat_(train.num_cases);
+        for (uint i = 0; i < train.num_cases; ++i) {
+          y_hat_[i] = fast_pnorm(train_err[i]);
+        }
+        double eval_score = tracker.evaluate(fm, y_hat_, *train.target);
+        tracker.record(fm, iter_cntr, eval_score);
+      }
+    }
     calculate_error(train, train_err);
     update_all(train, train_err, v_q);
   }
@@ -491,7 +508,7 @@ void MCMC_ALS_Learner::calculate_error(Data& data, DVector<double>& error)
       error[i] -= data.target->get(i);
     }
   } else if (fm->TASK == CLASSIFICATION) {
-    double TMP(error), phi_minus_mu, Phi_minus_mu;
+    double TMP(error);
     if (do_sample) {
       #pragma omp parallel for num_threads(nthreads) private(TMP(error))
       for (uint i = 0; i < data.num_cases; ++i)
@@ -506,7 +523,7 @@ void MCMC_ALS_Learner::calculate_error(Data& data, DVector<double>& error)
         }
       }
     } else {
-      #pragma omp parallel for num_threads(nthreads) private(TMP(error), phi_minus_mu, Phi_minus_mu)
+      #pragma omp parallel for num_threads(nthreads) private(TMP(error))
       for (uint i = 0; i < data.num_cases; ++i)
       {
         TMP(error) = error[i];

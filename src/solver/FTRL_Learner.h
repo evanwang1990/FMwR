@@ -7,9 +7,8 @@
 #include "../util/Dmatrix.h"
 #include "../util/Smatrix.h"
 #include "../util/Random.h"
-#include "Learner.h"
+#include "../core/Learner.h"
 
-// just for logistic regression
 class FTRL_Learner: public Learner
 {
 protected:
@@ -30,12 +29,12 @@ public:
   double alpha_w, beta_w;
   double alpha_v, beta_v;
 
-  int max_iter;
+  // int max_iter;
   int ramdom_step; //TODO: random_step
 
 public:
   FTRL_Learner()
-    : Learner(), max_iter(3000), l1_regw(0.5), l1_regv(1), l2_regw(0.1), l2_regv(0.5), alpha_w(0.1), alpha_v(0.1), beta_w(1.0), beta_v(1.0), ramdom_step(1)
+    : Learner(), l1_regw(0.5), l1_regv(1), l2_regw(0.1), l2_regv(0.5), alpha_w(0.1), alpha_v(0.1), beta_w(1.0), beta_v(1.0), ramdom_step(1)
   {}
 
   ~FTRL_Learner() {}
@@ -56,6 +55,11 @@ void FTRL_Learner::init()
   n_w.setSize(fm->num_attribute); n_w.init(0.0);
   z_v.setSize(fm->num_factor, fm->num_attribute); z_v.init(0.0);
   n_v.setSize(fm->num_factor, fm->num_attribute); n_v.init(0.0);
+
+  if (tracker.step_size > 0) {
+    tracker.max_iter = max_iter;
+    tracker.init();
+  }
 }
 
 
@@ -65,7 +69,7 @@ void FTRL_Learner::learn(Data& train)
   DVector<float>* target = train.target;
   double y_hat, g, delta;
 
-  int iter = 0;
+  int iter = 0, ii = -1;
   for (;;)
   {
     for (uint i = random_select(ramdom_step); i < train.num_cases; i += random_select(ramdom_step))
@@ -110,6 +114,17 @@ void FTRL_Learner::learn(Data& train)
       }
 
       calculate_param();
+
+      if (tracker.step_size > 0) {
+        ii ++;
+        if (ii == tracker.step_size) { ii = 0; }
+        if (ii == 0 || iter == max_iter - 1) {
+          DVector<double> y_hat_(train.num_cases);
+          fm->predict_prob(train, y_hat_);
+          double eval_score = tracker.evaluate(fm, y_hat_, *train.target);
+          tracker.record(fm, iter, eval_score);
+        }
+      }
 
       iter ++;
       if (iter >= max_iter) { break; }

@@ -6,7 +6,8 @@
 #include "../util/Dvector.h"
 #include "../util/Dmatrix.h"
 #include "../util/Smatrix.h"
-#include "Learner.h"
+#include "../util/Random.h"
+#include "../core/Learner.h"
 
 class SGD_Learner: public Learner
 {
@@ -22,14 +23,16 @@ protected:
   DVector<double>* sum;
 
 public:
-  int max_iter;
+  // int max_iter;
   double learn_rate;
   bool l1_penalty;
   DVector<double> learn_rates;
   double alpha_rate; //TODO
 
+  int random_step;
+
 public:
-  SGD_Learner() : Learner(), l1_penalty(false), max_iter(3000) {};
+  SGD_Learner() : Learner(), l1_penalty(false), random_step(1) {};
   ~SGD_Learner() {}
 
 public:
@@ -57,6 +60,11 @@ void SGD_Learner::init()
   }
 
   learn_rates.setSize(3);
+
+  if (tracker.step_size > 0) {
+    tracker.max_iter = max_iter;
+    tracker.init();
+  }
 }
 
 void SGD_Learner::learn(Data& train)
@@ -64,9 +72,10 @@ void SGD_Learner::learn(Data& train)
   // mult.setSize(train.num_cases);
   SMatrix<float>* pdata = train.data;
   DVector<float>* target = train.target;
-  for (int iter = 0; iter < max_iter; iter++)
+  int iter = 0, ii = -1;
+  for (;;)
   {
-    for (uint i = 0; i < train.num_cases; ++i)
+    for (uint i = random_select(random_step); i < train.num_cases; i += random_select(random_step))
     {
 
       // update absolute value of l1 penalty
@@ -117,7 +126,22 @@ void SGD_Learner::learn(Data& train)
           }
         }
       }
+
+      if (tracker.step_size > 0) {
+        ii ++;
+        if (ii == tracker.step_size) { ii = 0; }
+        if (ii == 0 || iter == max_iter - 1) {
+          DVector<double> y_hat_(train.num_cases);
+          fm->predict_prob(train, y_hat_);
+          double eval_score = tracker.evaluate(fm, y_hat_, *train.target);
+          tracker.record(fm, iter, eval_score);
+        }
+      }
+
+      iter ++;
+      if (iter >= max_iter) { break; }
     }
+    if (iter >= max_iter) { break; }
   }
 }
 
