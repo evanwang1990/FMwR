@@ -17,6 +17,13 @@ typedef unsigned int uint;
 #define ALS  200
 #define SGD  300
 
+// Evaluation
+#define LL 000
+#define AUC 111
+#define ACC 222
+#define RMSE 333
+#define MSE 444
+
 
 // update parameters
 #define TMP(_X_) _X_##_

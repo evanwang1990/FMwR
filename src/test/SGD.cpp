@@ -46,14 +46,10 @@ geom_density(aes(x = y_hat2, color = factor(y+10)))
 */
 
 
-#include "../util/Smatrix.h"
-#include "../Data.h"
-#include "../Model.h"
-#include "../util/Swrap.h"
-#include "../SGD_Learner.h"
+#include "../FM.h"
 
 // [[Rcpp::export]]
-List test(NumericMatrix data_, NumericVector target, int factors, int max_iter, int nthreads, double x)
+List test_sgd(NumericMatrix data_, NumericVector target, int factors, int max_iter, int nthreads, int step, double x)
 {
   // init Data
   List dl = as_SMatrix(data_, false);
@@ -75,8 +71,8 @@ List test(NumericMatrix data_, NumericVector target, int factors, int max_iter, 
   fm.nthreads = nthreads;
   fm.k1 = true;
   fm.num_factor = factors;
-  fm.regw = 2;
-  fm.regv = 1.0;
+  fm.regw = 1;
+  fm.regv = 0.1;
   fm.init();
   //fm.v.init(x);
   //fm.w.init(x);
@@ -91,19 +87,22 @@ List test(NumericMatrix data_, NumericVector target, int factors, int max_iter, 
   learner.nthreads = 4;
   learner.max_iter = max_iter;
   learner.learn_rate = x;
-  learner.l1_penalty = true;
+  learner.l1_penalty = false;
+  learner.random_step = step;
+
+  learner.tracker.step_size = 50;
+  learner.tracker.type = AUC;
+
   learner.init();
 
   // learn model
   learner.learn(data);
 
+
   // predict data
   DVector<double> res(data.num_cases);
   fm.predict_prob(data, res);
 
-  // evaluate 有问题
-  //cout<<"error: "<<learner.evaluate(data)<<endl;
-
   // output model
-  return List::create(fm.save_model(), res.to_rtype());
+  return List::create(fm.save_model(), res.to_rtype(), learner.tracker.save(), learner.tracker.evaluations_of_train.to_rtype());
 }

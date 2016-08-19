@@ -59,6 +59,18 @@ public:
     for (T *it0 = this->begin(), *it1 = v.begin(); it0 != this->end(); ++it0, ++it1) { *it0 = *it1; }
   }
 
+  void assign(NumericMatrix v)
+  {
+    if ((dim1 != (uint)v.nrow()) && (dim2 != (uint)v.ncol())) { setSize(v.nrow(), v.ncol()); }
+    for (uint i = 0; i < dim1; ++i)
+    {
+      for (uint j = 0; j < dim2; ++j)
+      {
+        value[i][j] = v(i, j);
+      }
+    }
+  }
+
   void assign_by_row(DVector<T>& v)
   {
     if ((dim2 != v.size())) { setSize(dim1, v.size()); }

@@ -43,14 +43,26 @@ summary(pnorm(res[[2]][airq[,1] < 0]))
  ggplot(data = x) +
 geom_density(aes(x = y_hat, color = factor(y))) +
 geom_density(aes(x = y_hat2, color = factor(y+10)))
+
+ res1 <- test_ftrl(airq[,2:6], airq[,1], 1, 10000, 1, 1)
+ res2 <- test_ftrl(airq[,2:6], airq[,1], 1, 10000, 1, 3)
+ res3 <- test_ftrl(airq[,2:6], airq[,1], 1, 10000, 1, 8)
+ x <- data.frame(
+ x = res1[[3]][[1]],
+ y1 = res1[[4]],
+ y2 = res2[[4]],
+ y3 = res3[[4]])
+ ggplot(data = x) +
+ geom_point(aes(x = x, y = y1), color = "red") +
+ geom_line(aes(x = x, y = y1), color = "red") +
+ geom_point(aes(x = x, y = y2), color = "green") +
+ geom_line(aes(x = x, y = y2), color = "green") +
+ geom_point(aes(x = x, y = y3), color = "black") +
+ geom_line(aes(x = x, y = y3), color = "black")
 */
 
 
-#include "../util/Smatrix.h"
-#include "../Data.h"
-#include "../Model.h"
-#include "../util/Swrap.h"
-#include "../FTRL_Learner.h"
+#include "../FM.h"
 
 // [[Rcpp::export]]
 List test_ftrl(NumericMatrix data_, NumericVector target, int factors, int max_iter, int nthreads, int step)
@@ -95,18 +107,20 @@ List test_ftrl(NumericMatrix data_, NumericVector target, int factors, int max_i
   learner.l1_regv = 0.3;
   learner.l2_regv = 0.1;
   learner.ramdom_step = step;
+
+  learner.tracker.step_size = 50;
+  learner.tracker.type = AUC;
+
   learner.init();
 
   // learn model
   learner.learn(data);
 
+
   // predict data
   DVector<double> res(data.num_cases);
   fm.predict_prob(data, res);
 
-  // evaluate 有问题
-  //cout<<"error: "<<learner.evaluate(data)<<endl;
-
   // output model
-  return List::create(fm.save_model(), res.to_rtype());
+  return List::create(fm.save_model(), res.to_rtype(), learner.tracker.save(), learner.tracker.evaluations_of_train.to_rtype());
 }

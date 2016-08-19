@@ -34,7 +34,7 @@ airq[,1] <- ifelse(airq[,1] > 60, 1, -1)
 airq[,2:6] <- apply(airq[,2:6], 2, scale)
 airq0$Ozone <- ifelse(airq0$Ozone > 60, 1, -1)
 
-res <- test(airq[,2:6], airq[,1], 1, 30, 1, 0.01); res[[1]]
+res <- test_tdap(airq[,2:6], airq[,1], 1, 30, 1, 1); res[[1]]
 summary(pnorm(res[[2]][airq[,1] > 0]))
 summary(pnorm(res[[2]][airq[,1] < 0]))
 
@@ -43,14 +43,26 @@ summary(pnorm(res[[2]][airq[,1] < 0]))
  ggplot(data = x) +
 geom_density(aes(x = y_hat, color = factor(y))) +
 geom_density(aes(x = y_hat2, color = factor(y+10)))
+
+res1 <- test_tdap(airq[,2:6], airq[,1], 1, 4000, 1, 3)
+res2 <- test_ftrl(airq[,2:6], airq[,1], 1, 4000, 1, 3)
+res3 <- test_sgd(airq[,2:6], airq[,1], 1, 4000, 1, 3, 0.0002)
+x <- data.frame(
+ x = res1[[3]][[1]],
+ y1 = res1[[4]],
+ y2 = res2[[4]],
+ y3 = res3[[4]])
+ggplot(data = x) +
+ geom_point(aes(x = x, y = y1), color = "red") +
+ geom_line(aes(x = x, y = y1), color = "red") +
+ geom_point(aes(x = x, y = y2), color = "green") +
+ geom_line(aes(x = x, y = y2), color = "green") +
+ geom_point(aes(x = x, y = y3), color = "black") +
+ geom_line(aes(x = x, y = y3), color = "black")
 */
 
 
-#include "../util/Smatrix.h"
-#include "../Data.h"
-#include "../Model.h"
-#include "../util/Swrap.h"
-#include "../TDAP_Learner.h"
+#include "../FM.h"
 
 // [[Rcpp::export]]
 List test_tdap(NumericMatrix data_, NumericVector target, int factors, int max_iter, int nthreads, int step)
@@ -78,6 +90,7 @@ List test_tdap(NumericMatrix data_, NumericVector target, int factors, int max_i
   fm.regw = 0.001;
   fm.regv = 0.003;
   fm.init();
+  //cout<<"fm:"<<fm.w0<<endl;
   //fm.v.init(x);
   //fm.w.init(x);
 
@@ -95,18 +108,20 @@ List test_tdap(NumericMatrix data_, NumericVector target, int factors, int max_i
   learner.l1_regv = 0.3;
   learner.l2_regv = 0.1;
   learner.random_step = step;
+
+  learner.tracker.step_size = 50;
+  learner.tracker.type = AUC;
+
   learner.init();
 
   // learn model
   learner.learn(data);
 
+
   // predict data
   DVector<double> res(data.num_cases);
   fm.predict_prob(data, res);
 
-  // evaluate 有问题
-  //cout<<"error: "<<learner.evaluate(data)<<endl;
-
   // output model
-  return List::create(fm.save_model(), res.to_rtype());
+  return List::create(fm.save_model(), res.to_rtype(), learner.tracker.save(), learner.tracker.evaluations_of_train.to_rtype());
 }
