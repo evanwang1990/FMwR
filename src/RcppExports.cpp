@@ -5,13 +5,13 @@
 
 using namespace Rcpp;
 
-// rcpp_hello
-List rcpp_hello();
-RcppExport SEXP FMwR_rcpp_hello() {
+// FM
+List FM();
+RcppExport SEXP FMwR_FM() {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
-    __result = Rcpp::wrap(rcpp_hello());
+    __result = Rcpp::wrap(FM());
     return __result;
 END_RCPP
 }

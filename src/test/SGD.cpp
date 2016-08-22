@@ -45,8 +45,22 @@ geom_density(aes(x = y_hat, color = factor(y))) +
 geom_density(aes(x = y_hat2, color = factor(y+10)))
 */
 
+#include <Rcpp.h>
+#include <omp.h>
 
-#include "../FM.h"
+#include "../util/Dmatrix.h"
+#include "../util/Dvector.h"
+#include "../util/Macros.h"
+#include "../util/Random.h"
+#include "../util/Smatrix.h"
+#include "../util/Swrap.h"
+
+#include "../core/Data.h"
+#include "../core/Model.h"
+#include "../core/Learner.h"
+#include "../core/Evaluation.h"
+#include "../core/Validator.h"
+#include "../solver/SGD_Learner.h"
 
 // [[Rcpp::export]]
 List test_sgd(NumericMatrix data_, NumericVector target, int factors, int max_iter, int nthreads, int step, double x)
@@ -91,7 +105,7 @@ List test_sgd(NumericMatrix data_, NumericVector target, int factors, int max_it
   learner.random_step = step;
 
   learner.tracker.step_size = 50;
-  learner.tracker.type = AUC;
+  learner.tracker.type = LL;
 
   learner.init();
 

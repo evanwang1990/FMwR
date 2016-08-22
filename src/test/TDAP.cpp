@@ -39,14 +39,14 @@ summary(pnorm(res[[2]][airq[,1] > 0]))
 summary(pnorm(res[[2]][airq[,1] < 0]))
 
  fit0 <- glm(factor(Ozone) ~ Solar.R + Wind + Temp + Month + Day, data = airq0, family = binomial(link = "logit"))
- x <- data.frame(y = airq0[,1], y_hat = res[[2]], y_hat2 = predict(fit0, airq0, type = "response"))
+ x <- data.frame(y = airq0[,1], y_hat = res2[[2]], y_hat2 = predict(fit0, airq0, type = "response"))
  ggplot(data = x) +
 geom_density(aes(x = y_hat, color = factor(y))) +
 geom_density(aes(x = y_hat2, color = factor(y+10)))
 
-res1 <- test_tdap(airq[,2:6], airq[,1], 1, 4000, 1, 3)
-res2 <- test_ftrl(airq[,2:6], airq[,1], 1, 4000, 1, 3)
-res3 <- test_sgd(airq[,2:6], airq[,1], 1, 4000, 1, 3, 0.0002)
+res1 <- test_tdap(airq[,2:6], airq[,1], 1, 6000, 1, 3)
+res2 <- test_ftrl(airq[,2:6], airq[,1], 1, 6000, 1, 3)
+res3 <- test_sgd(airq[,2:6], airq[,1], 1, 6000, 1, 3, 0.0002)
 x <- data.frame(
  x = res1[[3]][[1]],
  y1 = res1[[4]],
@@ -62,7 +62,23 @@ ggplot(data = x) +
 */
 
 
-#include "../FM.h"
+#include <Rcpp.h>
+#include <omp.h>
+
+#include "../util/Dmatrix.h"
+#include "../util/Dvector.h"
+#include "../util/Macros.h"
+#include "../util/Random.h"
+#include "../util/Smatrix.h"
+#include "../util/Swrap.h"
+
+#include "../core/Data.h"
+#include "../core/Model.h"
+#include "../core/Learner.h"
+#include "../core/Evaluation.h"
+#include "../core/Validator.h"
+
+#include "../solver/TDAP_Learner.h"
 
 // [[Rcpp::export]]
 List test_tdap(NumericMatrix data_, NumericVector target, int factors, int max_iter, int nthreads, int step)
@@ -107,10 +123,11 @@ List test_tdap(NumericMatrix data_, NumericVector target, int factors, int max_i
   learner.l2_regw = 1;
   learner.l1_regv = 0.3;
   learner.l2_regv = 0.1;
+  learner.gamma = 1e-4;
   learner.random_step = step;
 
   learner.tracker.step_size = 50;
-  learner.tracker.type = AUC;
+  learner.tracker.type = LL;
 
   learner.init();
 
