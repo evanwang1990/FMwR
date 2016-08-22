@@ -29,7 +29,7 @@ public:
   int type;
 
 public:
-  Validator() : record_times(MAX_REC), step_size(-1), type(AUC) {}
+  Validator() : step_size(-1), type(LL) {}
   void init();
   void record(Model* fm, int iter_idx, double eval_score);
   double evaluate(Model* fm, DVector<double>& y_hat, DVector<float>& y_true);
@@ -42,6 +42,10 @@ void Validator::init()
 {
   record_cnter = 0;
   record_times = (int)(std::ceil(((double)max_iter - 0.5) / (double)step_size)) + 1;
+  if (record_times > MAX_REC) {
+    step_size = int((double)(max_iter + 1) / (double)MAX_REC) + 1;
+    record_times = (int)(std::ceil(((double)max_iter - 0.5) / (double)step_size)) + 1;
+  }
   record_index.setSize(record_times);
   parameters.setSize(record_times);
   evaluations_of_train.setSize(record_times);
