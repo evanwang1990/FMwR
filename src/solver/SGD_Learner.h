@@ -19,15 +19,12 @@ protected:
   double u_w0, u_w, u_v;
 
 protected:
-  // DVector<double> mult;
   DVector<double>* sum;
 
 public:
-  // int max_iter;
   double learn_rate;
   bool l1_penalty;
   DVector<double> learn_rates;
-  double alpha_rate; //TODO
 
   int random_step;
 

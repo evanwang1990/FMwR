@@ -26,7 +26,6 @@ protected:
   double z_w0;
   DVector<double> z_w;
   DMatrix<double> z_v;
-  double alpha_w, alpha_v;
   DVector<double>* sum;
 
 public:
@@ -35,13 +34,14 @@ public:
   double l1_regv, l2_regv;
   // decay rate
   double gamma;
-
+  // learn rate
+  double alpha_w, alpha_v;
   // int max_iter;
   int random_step;
 
 public:
   TDAP_Learner()
-    : Learner(), l1_regw(0.5), l1_regv(1), l2_regw(0.1), l2_regv(0.5), alpha_w(0.1), alpha_v(0.1), random_step(1)
+    : Learner(), l1_regw(0.5), l1_regv(1), l2_regw(0.1), l2_regv(0.5), gamma(0.001), alpha_w(0.1), alpha_v(0.1), random_step(1)
   {}
 
   ~TDAP_Learner() {}
@@ -155,7 +155,7 @@ void TDAP_Learner::learn(Data& train)
           tracker.record(fm, iter, eval_score);
         }
       }
-      
+
       iter ++;
       if (iter >= max_iter) { break; }
     }

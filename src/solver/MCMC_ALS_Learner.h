@@ -19,7 +19,7 @@ protected:
 public:
   // uint max_iter;
   uint iter_cntr;
-  uint num_eval_cases;
+  // uint num_eval_cases;
 
   double alpha_0, gamma_0, beta_0, mu_0;
   double alpha;
