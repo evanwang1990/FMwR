@@ -8,23 +8,22 @@ solver.control <- function(nthreads, max_iter, evaluation, solver = TDAP.control
 
   stopifnot(evaluation %in% c("AUC", "ACC", "LL", "RMSE", "MAE"))
 
-
   list(nthreads = nthreads, max_iter = max_iter, evaluation = evaluation, solver = solver)
 }
 
 
-MCMC.control.default <- list(
-  alpha_0 = 1.0,
-  gamma_0 = 1.0,
-  beta_0  = 1.0,
-  mu_0    = 0.0,
-  alpha    = 1.0,
+MCMC.solver.default <- list(
+  alpha_0   = 1.0,
+  gamma_0   = 1.0,
+  beta_0    = 1.0,
+  mu_0      = 0.0,
+  alpha     = 1.0,
   w0_mean_0 = 1.0
 )
 
-MCMC.control <- function(...)
+MCMC.solver <- function(...)
 {
-  controls <- control_assign(MCMC.control.default, list(...))
+  controls <- control_assign(MCMC.solver.default, list(...))
 
   if (controls$is.default) {
     message("Use default MCMC solver.\n\n")
@@ -34,18 +33,18 @@ MCMC.control <- function(...)
 }
 
 
-ALS.control.default <- list(
-  alpha_0 = 1.0,
-  gamma_0 = 1.0,
-  beta_0  = 1.0,
-  mu_0    = 0.0,
-  alpha    = 1.0,
+ALS.solver.default <- list(
+  alpha_0   = 1.0,
+  gamma_0   = 1.0,
+  beta_0    = 1.0,
+  mu_0      = 0.0,
+  alpha     = 1.0,
   w0_mean_0 = 1.0
 )
 
-ALS.control <- function(...)
+ALS.solver <- function(...)
 {
-  controls <- control_assign(ALS.control.default, list(...))
+  controls <- control_assign(ALS.solver.default, list(...))
 
   if (controls$is.default) {
     message("Use default ALS solver.\n\n")
@@ -55,15 +54,14 @@ ALS.control <- function(...)
 }
 
 
-SGD.control.default <- list(
-  learn_rate = 0.01,
-  l1_penalty = FALSE,
+SGD.solver.default <- list(
+  learn_rate  = 0.01,
   random_step = 1L
 )
 
-SGD.control <- function(...)
+SGD.solver <- function(...)
 {
-  controls <- control_assign(SGD.control.default, list(...))
+  controls <- control_assign(SGD.solver.default, list(...))
 
   if (controls$is.default) {
     message("Use default SGD solver.\n\n")
@@ -72,20 +70,17 @@ SGD.control <- function(...)
   controls$contr
 }
 
-FTRL.control.default <- list(
-  L1.w = 0.5,
-  L1.v = 1.0,
-  L2.w = 0.1,
-  L2.v = 0.5,
-  alpha.w = 0.1,
-  alpha.v = 0.1,
-  beta.w = 1.0,
-  beta.w = 1.0
+FTRL.solver.default <- list(
+  alpha_w     = 0.1,
+  alpha_v     = 0.1,
+  beta_w      = 1.0,
+  beta_v      = 1.0,
+  random_step = 1L
 )
 
-FTRL.control <- function(...)
+FTRL.solver <- function(...)
 {
-  controls <- control_assign(FTRL.control.default, list(...))
+  controls <- control_assign(FTRL.solver.default, list(...))
 
   if (controls$is.default) {
     message("Use default FTRL solver. \n\n")
@@ -94,20 +89,16 @@ FTRL.control <- function(...)
   controls$contr
 }
 
-TDAP.control.default <- list(
-  L1.w = 0.5,
-  L1.v = 1.0,
-  L2.w = 0.1,
-  L2.v = 0.5,
-  gamma = 1e-4,
-  alpha.w = 0.1,
-  alpha.v = 0.1,
+TDAP.solver.default <- list(
+  gamma       = 1e-4,
+  alpha_w     = 0.1,
+  alpha_v     = 0.1,
   random_step = 1L
 )
 
-TDAP.control <- function(...)
+TDAP.solver <- function(...)
 {
-  controls <- control_assign(TDAP.control.default, list(...))
+  controls <- control_assign(TDAP.solver.default, list(...))
 
   if (controls$is.default) {
     message("Use default TDAP solver. \n\n")
