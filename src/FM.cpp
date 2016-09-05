@@ -3,22 +3,43 @@
 using namespace Rcpp;
 using namespace std;
 
+
 // [[Rcpp::export]]
 List FM(List data_, NumericVector target, List fm_controls, List solver_controls, List validation_controls)
 {
+  map<string, int> tasks_map;
+  tasks_map["CLASSIFICATION"] = 10;
+  tasks_map["REGRESSION"    ] = 20;
+  tasks_map["RANKING"       ] = 30;
+
+  map<string, int> solvers_map;
+  solvers_map["MCMC"] = 100;
+  solvers_map["ALS" ] = 200;
+  solvers_map["SGD" ] = 300;
+  solvers_map["FTRL"] = 400;
+  solvers_map["TDAP"] = 500;
+
+  map<string, int> evaluations_map;
+  evaluations_map["LL"  ] =  000;
+  evaluations_map["AUC" ] =  111;
+  evaluations_map["ACC" ] =  222;
+  evaluations_map["RMSE"] =  333;
+  evaluations_map["MSE" ] =  444;
+  evaluations_map["MAE" ] =  555;
+
   // init Data
-  SMatrix<float> m(data);
+  SMatrix<float> m(data_);
   Data data;
-  data.add(&m);
+  data.add_data(&m);
   DVector<float> tg;
   tg.assign(target);
-  data.add_target(&target);
+  data.add_target(&tg);
 
   // init Model
   Model fm;
   List hyper_params = fm_controls["hyper.params"];
   fm.k0            = (bool)hyper_params["keep.w0"];
-  fm.l2_reg0          = (double)hyper_params["L2.w0"];
+  fm.l2_reg0       = (double)hyper_params["L2.w0"];
   fm.k1            = (bool)hyper_params["keep.w1"];
   fm.l1_regw       = (double)hyper_params["L1.w1"];
   fm.l2_regw       = (double)hyper_params["L2.w1"];
@@ -29,23 +50,12 @@ List FM(List data_, NumericVector target, List fm_controls, List solver_controls
   fm.l2_regv       = (double)hyper_params["L2.v"];
   fm.nthreads      = (int)fm_controls["nthreads"];
   fm.num_attribute = data.num_features;
-  switch ((String)fm_controls["solver"]) {
-    case "SGD" : fm.SOLVER = SGD ; break;
-    case "TDAP": fm.SOLVER = TDAP; break;
-    case "FTRL": fm.SOLVER = FTRL; break;
-    case "MCMC": fm.SOLVER = MCMC; break;
-    case "ALS" : fm.SOLVER = ALS ; break;
-    default    : stop("Unknown solver...");
-  }
-  swtich ((String)fm_controls["task"]) {
-    case "CLASSIFICATION" : fm.TASK = CLASSIFICATION; break;
-    case "REGRESSION"     : fm.TASK = REGRESSION    ; break;
-    default               : stop("Unknown task...");
-  }
+  fm.SOLVER        = solvers_map[as<string>(fm_controls["solver"])];
+  fm.TASK          = tasks_map[as<string>(fm_controls["task"])];
   fm.init();
 
   // init Metainfo
-  DataMetaInfo meta(data.num_features); //TODO; varclus
+  DataMetaInfo meta(data.num_features); //TODO: set variables' groups
 
   // init Learner
   Learner* learner;
@@ -65,62 +75,66 @@ List FM(List data_, NumericVector target, List fm_controls, List solver_controls
   learner->max_iter          = (int)solver_controls["max_iter"];
   learner->tracker.step_size = (int)validation_controls["step_size"];
   learner->tracker.max_iter  = learner->max_iter;
-  switch ((String)solver_controls["evaludation"]) { //TODO:收敛 R中检验回归或分类对应的评价标准
-    case "AUC"  : learner->type = AUC ; learner->tracker.type = AUC ; break;
-    case "ACC"  : learner->type = ACC ; learner->tracker.type = ACC ; break;
-    case "LL"   : learner->type = LL  ; learner->tracker.type = LL  ; break;
-    case "RMSE" : learner->type = RMSE; learner->tracker.type = RMSE; break;
-    case "MAE"  : learner->type = MAE ; learner->tracker.type = MAE ; break;
-  }
+  learner->type              = evaluations_map[as<string>(solver_controls["evaludation"])]; //TODO:收敛 R中检验回归或分类对应的评价标准
+  learner->tracker.type       = evaluations_map[as<string>(solver_controls["evaludation"])];
   List solver = solver_controls["solver"];
-  switch (fm->SOLVER) {
-    case MCMC :
+  switch (fm.SOLVER) {
+    case MCMC : {
+      ((MCMC_Learner*)learner)->alpha_0   = (double)solver["alpha_0"];
+      ((MCMC_Learner*)learner)->gamma_0   = (double)solver["gamma_0"];
+      ((MCMC_Learner*)learner)->beta_0    = (double)solver["beta_0"];
+      ((MCMC_Learner*)learner)->mu_0      = (double)solver["mu_0"];
+      ((MCMC_Learner*)learner)->alpha     = (double)solver["alpha"];
+      ((MCMC_Learner*)learner)->w0_mean_0 = (double)solver["w0_mean_0"];
+      break;
+    }
     case ALS  : {
-      learner->alpha_0   = (double)solver["alpha_0"];
-      learner->gamma_0   = (double)solver["gamma_0"];
-      learner->beta_0    = (double)solver["beta_0"];
-      learner->mu_0      = (double)solver["mu_0"];
-      learner->alpha     = (double)solver["alpha"];
-      learner->w0_mean_0 = (double)solver["w0_mean_0"];
+      ((ALS_Learner*)learner)->alpha_0   = (double)solver["alpha_0"];
+      ((ALS_Learner*)learner)->gamma_0   = (double)solver["gamma_0"];
+      ((ALS_Learner*)learner)->beta_0    = (double)solver["beta_0"];
+      ((ALS_Learner*)learner)->mu_0      = (double)solver["mu_0"];
+      ((ALS_Learner*)learner)->alpha     = (double)solver["alpha"];
+      ((ALS_Learner*)learner)->w0_mean_0 = (double)solver["w0_mean_0"];
       break;
     }
     case SGD  : {
-      learner->learn_rate  = (double)solver["learn_rate"];
-      learner->random_step = (int)solver["random_step"];
+      ((SGD_Learner*)learner)->learn_rate  = (double)solver["learn_rate"];
+      ((SGD_Learner*)learner)->random_step = (int)solver["random_step"];
       break;
     }
     case FTRL : {
-      learner->alpha_w     = (double)solver["alpha_w"];
-      learner->alpha_v     = (double)solver["alpha_v"];
-      learner->beta_w      = (double)solver["beta_w"];
-      learner->beta_v      = (double)solver["beta_v"];
-      learner->random_step = (int)solver["random_step"];
+      ((FTRL_Learner*)learner)->alpha_w     = (double)solver["alpha_w"];
+      ((FTRL_Learner*)learner)->alpha_v     = (double)solver["alpha_v"];
+      ((FTRL_Learner*)learner)->beta_w      = (double)solver["beta_w"];
+      ((FTRL_Learner*)learner)->beta_v      = (double)solver["beta_v"];
+      ((FTRL_Learner*)learner)->random_step = (int)solver["random_step"];
       break;
     }
     case TDAP : {
-      learner->gamma       = (double)solver["gamma"];
-      leaner->alpha_w      = (double)solver["alpha_w"];
-      learner->alpha_v     = (double)solver["alpha_v"];
-      learner->random_step = (int)solver["random_step"];
+      ((TDAP_Learner*)learner)->gamma       = (double)solver["gamma"];
+      ((TDAP_Learner*)learner)->alpha_w     = (double)solver["alpha_w"];
+      ((TDAP_Learner*)learner)->alpha_v     = (double)solver["alpha_v"];
+      ((TDAP_Learner*)learner)->random_step = (int)solver["random_step"];
       break;
     }
-    default: stop("Unknown solver...")
+    default: stop("Unknown solver...");
   }
-  learner.init()
+
+  learner->init();
 
   // train model
-  learner.learn(data);
+  learner->learn(data);
 
   // output
   if (learner->tracker.step_size > 0) {
     return List::create(
       _["Model"] = fm.save_model(),
       _["Validation"] = List::create(
-        _["trace"] = tracker.save(),
+        _["trace"] = learner->tracker.save(),
         _["eval.train"] = learner->tracker.evaluations_of_train.to_rtype()
       )
-    )
+    );
   } else {
-    return List::create(_["Model"] = fm.save_model()) //TODO:save_model 优化
+    return List::create(_["Model"] = fm.save_model()); //TODO:save_model 优化
   }
 }

@@ -3,6 +3,8 @@
 
 #include <Rcpp.h>
 #include <omp.h>
+#include <map>
+#include <string>
 
 #include "util/Dmatrix.h"
 #include "util/Dvector.h"
