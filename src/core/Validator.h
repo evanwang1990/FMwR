@@ -17,7 +17,7 @@ struct Params {
 class Validator
 {
 public:
-  uint max_iter;
+  int max_iter;
   int step_size;
   int record_cnter;
   int record_times;
@@ -86,9 +86,14 @@ void Validator::report(Model* fm, Data& data)
 List Validator::save()
 {
   //TODO: record_times -> record_cnter ??
-  List valid(record_times + 1);
-  valid[0] = record_index.to_rtype();
-  for (int i = 1; i <= record_times; ++i)
+  List valid(record_cnter + 1);
+  NumericVector record_index_(record_cnter);
+  for (ri = 0; ri < record_cnter; ri ++)
+  {
+    record_index_[ri] = record_index[ri];
+  }
+  valid[0] = record_index_;
+  for (int i = 1; i <= record_cnter; ++i)
   {
     Params& P = parameters[i - 1];
     valid[i] = List::create(
