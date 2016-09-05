@@ -35,12 +35,14 @@ public:
   uint num_attribute;
   bool k0, k1;
   uint num_factor;
-  double reg0, regw, regv;
+  double l1_regw, l1_regv;
+  double l2_reg0, l2_regw, l2_regv;
+  // double reg0, regw, regv;
   double init_mean, init_stdev;
 
 public:
   Model()
-    : SOLVER(SGD), TASK(CLASSIFICATION), num_factor(0), init_mean(0.0), init_stdev(0.01), reg0(0.0), regw(0.0), regv(0.0), k0(true), k1(true), nthreads(1) //rename keep_w0
+    : SOLVER(TDAP), TASK(CLASSIFICATION), num_factor(0), init_mean(0.0), init_stdev(0.01),l1_regw(0.0), l1_regv(0.0), l2_reg0(0.0), l2_regw(0.0), l2_regv(0.0), k0(true), k1(true), nthreads(1) //rename keep_w0
   {}
 
   ~Model() {}
@@ -51,6 +53,7 @@ public:
   void predict_batch(Data& _data, DVector<double>& _out, DVector<double>* v_sum_ = NULL);
   void predict_prob(Data& _data, DVector<double>& _out);
   List save_model();
+  void load_model(List model_list);
 };
 
 void Model::init()
@@ -174,10 +177,43 @@ void Model::predict_prob(Data& _data, DVector<double>& _out)
 List Model::save_model()
 {
   return List::create(
-    _["w0"] = w0,
-    _["w"]  = w.to_rtype(),
-    _["v"]  = v.to_rtype()
+    _["model.control"] = List::create(
+      _["keep.w0"]       = k0,
+      _["L2.w0"]         = l2_reg0,
+      _["keep.w1"]       = k1,
+      _["L1.w1"]         = l1_regw,
+      _["L2.w1"]         = l2_regw,
+      _["factor.number"] = num_factor,
+      _["v.init_mean"]   = init_mean,
+      _["v.init_stdev"]  = init_stdev,
+      _["L1.v"]          = l1_regv,
+      _["L2.v"]          = l2_regv
+    ),
+    _["model.params"] = List::create(
+      _["w0"] = w0,
+      _["w"]  = w.to_rtype(),
+      _["v"]  = v.to_rtype()
+    )
   );
+}
+
+void Model::load_model(List model_list)
+{
+  List model_control = model_list["model.control"];
+  k0                 = (bool)(model_control["keep.w0"]);
+  l2_reg0            = (double)(model_control["L2.w0"]);
+  k1                 = (bool)(model_control["keep.w1"]);
+  l1_regw            = (double)(model_control["L1.w1"]);
+  l2_regw            = (double)(model_control["L2.w1"]);
+  num_factor         = (int)(model_control["factor.number"]);
+  init_mean          = (double)(model_control["v.init_mean"]);
+  init_stdev         = (double)(model_control["v.init_stdev"]);
+  l1_regv            = (double)(model_control["l1_regv"]);
+  l2_regv            = (double)(model_control["l2_regv"]);
+  List model_params  = model_list["model.params"];
+  w0                 = (double)(model_params["w0"]);
+  w.assign(as<NumericVector>(model_params["w"]));
+  v.assign(as<NumericMatrix>(model_params["v"]));
 }
 
 #endif
