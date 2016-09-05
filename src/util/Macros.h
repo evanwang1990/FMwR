@@ -16,13 +16,16 @@ typedef unsigned int uint;
 #define MCMC 100
 #define ALS  200
 #define SGD  300
+#define FTRL 400
+#define TDAP 500
 
 // Evaluation
-#define LL 000
-#define AUC 111
-#define ACC 222
+#define LL   000
+#define AUC  111
+#define ACC  222
 #define RMSE 333
-#define MSE 444
+#define MSE  444
+#define MAE  555
 
 
 // update parameters
