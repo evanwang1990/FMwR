@@ -17,9 +17,7 @@ protected:
   DVector<double> cache_for_group_values;
 
 public:
-  // uint max_iter;
-  uint iter_cntr;
-  // uint num_eval_cases;
+  int iter_cntr;
 
   double alpha_0, gamma_0, beta_0, mu_0;
   double alpha;
@@ -154,8 +152,8 @@ void MCMC_ALS_Learner::update_w0(Data&train, DVector<double>& error)
   for (double* it = error.begin(); it != error.end(); ++it)
   { err += *it - w0; }
 
-  double w0_var = (double) 1.0 / (fm->reg0 + alpha * train.num_cases);
-  double w0_mean = - (alpha * err - w0_mean_0 * fm->reg0) * w0_var;
+  double w0_var = (double) 1.0 / (fm->l2_reg0 + alpha * train.num_cases);
+  double w0_mean = - (alpha * err - w0_mean_0 * fm->l2_reg0) * w0_var;
   double TMP(w0);
   double OLD(w0) = w0;
 

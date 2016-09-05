@@ -18,6 +18,8 @@ protected:
   DMatrix<double> q_v;
   double u_w0, u_w, u_v;
 
+  double regw, regv;
+
 protected:
   DVector<double>* sum;
 
@@ -42,6 +44,15 @@ public:
 
 void SGD_Learner::init()
 {
+  if (fm->l1_regw > 0 || fm-> l1_regv > 0) {
+    l1_penalty = true;
+    regw = fm->l1_regw;
+    regv = fm->l1_regv;
+  } else {
+    regw = fm->l2_regw;
+    regv = fm->l2_regw;
+  }
+
   if (fm->TASK != CLASSIFICATION) {
     l1_penalty = false; //TODO:test if l1 can be used in regression
   }
@@ -77,8 +88,8 @@ void SGD_Learner::learn(Data& train)
 
       // update absolute value of l1 penalty
       if (l1_penalty) {
-        u_w += learn_rate * fm->regw / train.num_cases;
-        u_v += learn_rate * fm->regv / train.num_cases;
+        u_w += learn_rate * regw / train.num_cases;
+        u_v += learn_rate * regv / train.num_cases;
       }
 
       SMatrix<float>::Iterator it(*pdata, i);
@@ -90,7 +101,7 @@ void SGD_Learner::learn(Data& train)
 
       if (fm->k0) {
         double& w0 = fm->w0;
-        w0 -= learn_rate * (mult + fm->reg0 * w0);
+        w0 -= learn_rate * (mult + fm->l2_reg0 * w0);
         // cout<<"w0 ="<<w0<<endl;
       }
 
@@ -102,7 +113,7 @@ void SGD_Learner::learn(Data& train)
           if (l1_penalty) {
             apply_penalty(w, u_w, q_w[it.index]);
           } else {
-            w -= learn_rate * fm->regw * w;
+            w -= learn_rate * regw * w;
             // cout<<"w ="<<w<<endl;
           }
         }
@@ -119,7 +130,7 @@ void SGD_Learner::learn(Data& train)
           if (l1_penalty) {
             apply_penalty(v, u_v, q_v(f,it.index));
           } else {
-            v -= learn_rate * fm->regv * v;
+            v -= learn_rate * regv * v;
           }
         }
       }
@@ -144,7 +155,7 @@ void SGD_Learner::learn(Data& train)
 
 double SGD_Learner::calculate_grad_mult(double& y_hat, float& y_true)
 {
-  double mult;
+  double mult = 0.0;
   if (fm->TASK == REGRESSION) {
     y_hat = min(max_target, y_hat);
     y_hat = max(min_target, y_hat);

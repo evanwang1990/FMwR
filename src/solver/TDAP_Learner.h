@@ -29,9 +29,6 @@ protected:
   DVector<double>* sum;
 
 public:
-  // regularization
-  double l1_regw, l2_regw;
-  double l1_regv, l2_regv;
   // decay rate
   double gamma;
   // learn rate
@@ -41,7 +38,7 @@ public:
 
 public:
   TDAP_Learner()
-    : Learner(), l1_regw(0.5), l1_regv(1), l2_regw(0.1), l2_regv(0.5), gamma(0.001), alpha_w(0.1), alpha_v(0.1), random_step(1)
+    : Learner(), gamma(0.001), alpha_w(0.1), alpha_v(0.1), random_step(1)
   {}
 
   ~TDAP_Learner() {}
@@ -76,7 +73,6 @@ void TDAP_Learner::init()
     tracker.init();
   }
 }
-
 
 void TDAP_Learner::learn(Data& train)
 {
@@ -173,11 +169,11 @@ void TDAP_Learner::calculate_param()
   for (uint i = 0; i < fm->num_attribute; ++i)
   {
     double TMP(z_w) = z_w[i];
-    if (abs(TMP(z_w)) <= l1_regw) {
+    if (abs(TMP(z_w)) <= fm->l1_regw) {
       fm->w[i] = 0.0;
     } else {
       double sign = TMP(z_w) < 0.0 ? -1.0:1.0;
-      fm->w[i] = - (TMP(z_w) - sign * l1_regw) / (delta_w[i] + l2_regw);
+      fm->w[i] = - (TMP(z_w) - sign * fm->l1_regw) / (delta_w[i] + fm->l2_regw);
     }
   }
 
@@ -187,11 +183,11 @@ void TDAP_Learner::calculate_param()
     for (uint i = 0; i < fm->num_attribute; ++i)
     {
       double TMP(z_v) = z_v(f, i);
-      if (abs(TMP(z_v)) <= l1_regv) {
+      if (abs(TMP(z_v)) <= fm->l1_regv) {
         fm->v(f, i) = 0.0;
       } else {
         double sign = TMP(z_v) < 0.0 ? -1.0:1.0;
-        fm->v(f, i) = - (TMP(z_v) - sign * l1_regv) / (delta_v(f, i) + l2_regv);
+        fm->v(f, i) = - (TMP(z_v) - sign * fm->l1_regv) / (delta_v(f, i) + fm->l2_regv);
       }
     }
   }
@@ -199,7 +195,7 @@ void TDAP_Learner::calculate_param()
 
 double TDAP_Learner::calculate_grad_mult(double& y_hat, float& y_true)
 {
-  double mult;
+  double mult = 0.0;
   if (fm->TASK == REGRESSION) {
     y_hat = min(max_target, y_hat);
     y_hat = max(min_target, y_hat);

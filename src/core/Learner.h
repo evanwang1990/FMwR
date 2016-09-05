@@ -21,12 +21,11 @@ public:
 
 public:
   DataMetaInfo* meta;
-  Data* validation;
   Model* fm;
   double min_target;
   double max_target;
   int nthreads;
-  uint max_iter;
+  int max_iter;
 
 public:
   Validator tracker;
@@ -38,6 +37,7 @@ public:
   ~Learner() {}
 
 public:
+  virtual void init() {}
   virtual void learn(Data& train, Data& test) {}
   virtual void learn(Data& train) {}
   virtual double evaluate(DVector<double>& y_hat, DVector<float>& y_true);
