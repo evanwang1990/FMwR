@@ -4,7 +4,7 @@
 using namespace Rcpp;
 using namespace std;
 
-#include "../Model.h"
+#include "../core/Model.h"
 
 //the main bottleneck: tranform large dense matrix to SMatrix
 

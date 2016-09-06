@@ -88,7 +88,7 @@ List Validator::save()
   //TODO: record_times -> record_cnter ??
   List valid(record_cnter + 1);
   NumericVector record_index_(record_cnter);
-  for (ri = 0; ri < record_cnter; ri ++)
+  for (int ri = 0; ri < record_cnter; ri ++)
   {
     record_index_[ri] = record_index[ri];
   }
