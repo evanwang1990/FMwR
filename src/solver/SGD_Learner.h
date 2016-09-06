@@ -81,6 +81,7 @@ void SGD_Learner::learn(Data& train)
   SMatrix<float>* pdata = train.data;
   DVector<float>* target = train.target;
   int iter = 0, ii = -1;
+  double OLD(eval_score) = 0.0;
   for (;;)
   {
     for (uint i = random_select(random_step); i < train.num_cases; i += random_select(random_step))
@@ -142,13 +143,24 @@ void SGD_Learner::learn(Data& train)
           DVector<double> y_hat_(train.num_cases);
           fm->predict_prob(train, y_hat_);
           double eval_score = tracker.evaluate(fm, y_hat_, *train.target);
+          if (iter > tracker.step_size && abs((eval_score - OLD(eval_score)) / (OLD(eval_score) + 1e-30)) <= conv_condition) {
+            conv_times ++;
+          } else {
+            conv_times = 0;
+          }
+          OLD(eval_score) = eval_score;
           tracker.record(fm, iter, eval_score);
         }
       }
 
       iter ++;
+      if (conv_times >= 3) {
+        convergent = true;
+        break;
+      }
       if (iter >= max_iter) { break; }
     }
+    if (conv_times >= 3) { break; }
     if (iter >= max_iter) { break; }
   }
 }

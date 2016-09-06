@@ -82,7 +82,6 @@ void TDAP_Learner::learn(Data& train)
 
   int iter = 0, ii = -1;
   double y_hat, mult,  g, sigma;
-  int conv_times = 0;
   double OLD(eval_score) = 0.0;
   for (;;)
   {

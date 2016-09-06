@@ -36,9 +36,10 @@ public:
 public:
   bool convergent;
   double conv_condition;
+  int conv_times;
 
 public:
-  Learner(): meta(NULL), nthreads(1), max_iter(3000), convergent(false) , conv_condition(1e-4){}
+  Learner(): meta(NULL), nthreads(1), max_iter(3000), convergent(false) , conv_condition(1e-4), conv_times(0){}
 
   ~Learner() {}
 
