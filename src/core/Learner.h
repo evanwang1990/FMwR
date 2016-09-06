@@ -27,12 +27,18 @@ public:
   int nthreads;
   int max_iter;
 
+// validation
 public:
   Validator tracker;
   int type;
 
+// convergence condtions
 public:
-  Learner(): meta(NULL), nthreads(1), max_iter(3000) {}
+  bool convergent;
+  double conv_condition;
+
+public:
+  Learner(): meta(NULL), nthreads(1), max_iter(3000), convergent(false) , conv_condition(1e-4){}
 
   ~Learner() {}
 

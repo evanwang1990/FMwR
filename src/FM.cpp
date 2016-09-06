@@ -75,8 +75,9 @@ List FM(List data_, NumericVector target, List fm_controls, List solver_controls
   learner->max_iter          = (int)solver_controls["max_iter"];
   learner->tracker.step_size = (int)validation_controls["step_size"];
   learner->tracker.max_iter  = learner->max_iter;
-  learner->type              = evaluations_map[as<string>(solver_controls["evaludation"])]; //TODO:收敛 R中检验回归或分类对应的评价标准
-  learner->tracker.type       = evaluations_map[as<string>(solver_controls["evaludation"])];
+  learner->type              = evaluations_map[as<string>(solver_controls["evaluation"])]; //TODO:收敛 R中检验回归或分类对应的评价标准
+  learner->tracker.type      = evaluations_map[as<string>(solver_controls["evaluation"])];
+  learner->conv_condition    = (double)solver_controls["convergence"];
   List solver = solver_controls["solver"];
   switch (fm.SOLVER) {
     case MCMC : {
@@ -126,15 +127,26 @@ List FM(List data_, NumericVector target, List fm_controls, List solver_controls
   learner->learn(data);
 
   // output
+  List res;
   if (learner->tracker.step_size > 0) {
-    return List::create(
-      _["Model"] = fm.save_model(),
-      _["Validation"] = List::create(
-        _["trace"] = learner->tracker.save(),
-        _["eval.train"] = learner->tracker.evaluations_of_train.to_rtype()
+    NumericVector eval_train(learner->tracker.record_cnter);
+    for (int ri = 0; ri < learner->tracker.record_cnter; ri++)
+    {
+      eval_train[ri] = learner->tracker.evaluations_of_train[ri];
+    }
+
+    res = List::create(
+      _["Model"]       = fm.save_model(),
+      _["Convergence"] = learner->convergent,
+      _["Validation"]  = List::create(
+        _["trace"]            = learner->tracker.save(),
+        _["evaluation.train"] = eval_train
       )
     );
   } else {
-    return List::create(_["Model"] = fm.save_model()); //TODO:save_model 优化
+    res = List::create(_["Model"]       = fm.save_model(),
+                       _["Convergence"] = learner->convergent); //TODO:save_model 优化
   }
+  res.attr("class") = "FM";
+  return res;
 }
