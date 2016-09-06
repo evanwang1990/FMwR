@@ -5,7 +5,7 @@ control_assign <- function(default_controls, assign_list)
   }
 
   default_param_names <- names(default_controls)
-  to_assign_names <- tolower(names(assign_list))
+  to_assign_names <- names(assign_list)
   names(assign_list) <- to_assign_names
   num_diff <- 0
   for (name_ in to_assign_names)
