@@ -2,7 +2,7 @@ model.control <- function(task = "CLASSIFICATION", solver = "TDAP", nthreads = 1
 {
   stopifnot(task %in% c("CLASSIFICATION", "REGRESSION"));
   stopifnot(solver %in% c("MCMC", "ALS", "SGD", "FTRL", "TDAP"));
-  controls <- control_assign(model.control.default, params)
+  controls <- control_assign(model.control.default, list(...))
 
   if (controls$is.default) {
     message("Use default model settings.\n\n")
@@ -14,7 +14,7 @@ model.control <- function(task = "CLASSIFICATION", solver = "TDAP", nthreads = 1
 model.control.default <- list(
   # w0
   keep.w0       = TRUE,
-  L2.w0         = 0.0, 
+  L2.w0         = 0.0,
   # w1
   keep.w1       = TRUE,
   L1.w1         = 0.0,
