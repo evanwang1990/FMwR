@@ -1,4 +1,4 @@
-solver.control <- function(nthreads, max_iter, convergence = 1e-4, evaluation = "LL", solver = TDAP.solver())
+solver.control <- function(max_iter, nthreads = 1, convergence = 1e-4, evaluation = "LL", solver = TDAP.solver())
 {
   max_threads = parallel::detectCores()
   if (nthreads >= max_threads) {
@@ -8,7 +8,9 @@ solver.control <- function(nthreads, max_iter, convergence = 1e-4, evaluation = 
 
   stopifnot(evaluation %in% c("AUC", "ACC", "LL", "RMSE", "MAE"))
 
-  list(nthreads = nthreads, max_iter = max_iter, convergence = convergence, evaluation = evaluation, solver = solver)
+  res <- list(nthreads = nthreads, max_iter = max_iter, convergence = convergence, evaluation = evaluation, solver = solver)
+  class(res) <- "solver.control"
+  res
 }
 
 

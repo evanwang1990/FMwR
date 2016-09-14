@@ -8,7 +8,9 @@ model.control <- function(task = "CLASSIFICATION", solver = "TDAP", nthreads = 1
     message("Use default model settings.\n\n")
   }
 
-  list(task = task, solver = solver, nthreads = nthreads, hyper.params = controls$contr)
+  res <- list(task = task, solver = solver, nthreads = nthreads, hyper.params = controls$contr)
+  class(res) <- "model.control"
+  res
 }
 
 model.control.default <- list(
