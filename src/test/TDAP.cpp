@@ -103,8 +103,10 @@ List test_tdap(NumericMatrix data_, NumericVector target, int factors, int max_i
   fm.nthreads = nthreads;
   fm.k1 = true;
   fm.num_factor = factors;
-  fm.regw = 0.001;
-  fm.regv = 0.003;
+  fm.l1_regw = 1;
+  fm.l2_regw = 1;
+  fm.l1_regv = 0.3;
+  fm.l2_regv = 0.1;
   fm.init();
   //cout<<"fm:"<<fm.w0<<endl;
   //fm.v.init(x);
@@ -119,10 +121,6 @@ List test_tdap(NumericMatrix data_, NumericVector target, int factors, int max_i
   learner.fm = &fm;
   learner.nthreads = 4;
   learner.max_iter = max_iter;
-  learner.l1_regw = 1;
-  learner.l2_regw = 1;
-  learner.l1_regv = 0.3;
-  learner.l2_regv = 0.1;
   learner.gamma = 1e-4;
   learner.random_step = step;
 
