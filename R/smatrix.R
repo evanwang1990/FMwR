@@ -1,7 +1,12 @@
 Smatrix <- function(dgCMatrix, transpose = FALSE)
 {
-  stopifnot(class(dgCMatrix) == "dsparseModelMatrix")
-  dgCMatrix <- as(dgCMatrix, "dgCMatrix")
+
+  if (class(dgCMatrix) %in% c("matrix", "dsparseModelMatrix")) {
+    dgCMatrix <- as(dgCMatrix, "dgCMatrix")
+  }
+
+  stopifnot(class(dgCMatrix) == "dgCMatrix")
+
   if (!transpose) dgCMatrix <- t(dgCMatrix)
   smatrix <- list(
     value = dgCMatrix@x,
