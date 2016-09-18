@@ -77,6 +77,54 @@ public:
 
   uint nvalues() const { return size; }
 
+  List scales()
+  {
+    DVector<double> colSum(dim2);
+    colSum.init(0.0);
+    DVector<double> colSumSqr(dim2);
+    colSumSqr.init(0.0);
+    for (uint row = 0; row < dim1; row ++)
+    {
+      uint begin = row_idx[row];
+      uint end = row_idx[row + 1];
+      for (uint p = begin; p < end; ++p)
+      {
+        uint idx = col_idx[p];
+        double val = value[p];
+        colSum[idx] += val;
+        colSumSqr[idx] += val * val;
+      }
+    }
+
+    for (uint col = 0; col < dim2; col ++)
+    {
+      colSumSqr[col] = std::sqrt(colSumSqr[col] / (dim1 - 1) - colSum[col] * colSum[col] / (dim1 * (dim1 - 1)));
+      colSum[col] /= dim1;
+    }
+
+    return List::create(
+      _["mean"] = colSum.to_rtype(),
+      _["std"]  = colSumSqr.to_rtype()
+    );
+  }
+
+  void normalize(List scale)
+  {
+    DVector<double> colmean;
+    colmean.assign(as<NumericVector>(scale["mean"]));
+    DVector<double> colstd;
+    colstd.assign(as<NumericVector>(scale["std"]));
+    if (dim2 != colmean || dim2 != colstd) {
+      stop("the length of scale:mean or scale:std is not equal");
+    }
+    for (uint p = 0; p < value.size(); ++p)
+    {
+      if (colstd[p] != 0) {
+        value[p] = (value[p] - colmean[p]) / colstd[p];
+      }
+    }
+  }
+
 public:
   class Iterator;
 
