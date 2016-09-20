@@ -4,10 +4,9 @@ using namespace std;
 
 #include "../util/Smatrix.h"
 
-/***R
+/*
 library(Rcpp)
 setwd("/home/jinlingwang/project/github/FMwR/src/test/")
-sourceCpp("../util/Swrap.cpp")
 data <- matrix(c(1, 0, 0, 0,
                  0, 3, 4, 0,
                  0, 0, 5, 6,
@@ -54,6 +53,24 @@ void test_smatrix(List x)
 
 }
 
+// [[Rcpp::export]]
+List test_normalize(List data_)
+{
+  SMatrix<double> data(data_);
+  List sc = data.scales();
+  data.normalize(sc);
+  return List::create(sc, data.value.to_rtype());
+}
+
 /***R
-test_smatrix(sdata)
+data <- matrix(c(1, 0, 0, 0,
+                 0, 3, 4, 0,
+                 0, 0, 5, 6,
+                 0, 8, 0, 1),
+                 nrow = 4,
+                 byrow = T)
+library(Matrix)
+data_ <- Smatrix(as(data, "dgCMatrix"))
+test_normalize(data_)
 */
+
