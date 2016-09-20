@@ -9,7 +9,11 @@ Description: More about what it does (maybe more than one line)
 License: What license is it under?
 LazyData: TRUE
 Imports:
-    Rcpp (>= 0.12.2)
-    parallel (>= 3.2.2)
+    Rcpp (>= 0.12.2),
+    parallel (>= 3.2.2),
+    Matrix (>= 1.2-7.1),
+    MatrixModels (>= 0.4-1)
+Suggests:
+    data.table (>= 1.9.6)
 LinkingTo:
     Rcpp

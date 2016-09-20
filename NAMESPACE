@@ -1,4 +1,15 @@
-exportPattern("^[[:alpha:]]+")
 importFrom(Rcpp, evalCpp)
 importFrom(parallel, detectCores)
+importFrom(MatrixModels, model.Matrix)
+export(
+  "fm",
+  "model.control",
+  "solver.control",
+  "validation.control",
+  "MCMC.solver",
+  "ALS.solver",
+  "SGD.solver",
+  "FTRL.solver",
+  "TDAP.solver"
+)
 useDynLib(FMwR)
