@@ -75,8 +75,8 @@ List FM(List data_, NumericVector target, List fm_controls, List solver_controls
   learner->max_iter          = (int)solver_controls["max_iter"];
   learner->tracker.step_size = (int)validation_controls["step_size"];
   learner->tracker.max_iter  = learner->max_iter;
-  learner->type              = evaluations_map[as<string>(solver_controls["evaluation"])]; //TODO:收敛 R中检验回归或分类对应的评价标准
-  learner->tracker.type      = evaluations_map[as<string>(solver_controls["evaluation"])];
+  learner->type              = evaluations_map[as<string>(solver_controls["evaluate.method"])]; //TODO:收敛 R中检验回归或分类对应的评价标准
+  learner->tracker.type      = evaluations_map[as<string>(solver_controls["evaluate.method"])];
   learner->conv_condition    = (double)solver_controls["convergence"];
   List solver = solver_controls["solver"];
   switch (fm.SOLVER) {
@@ -135,13 +135,15 @@ List FM(List data_, NumericVector target, List fm_controls, List solver_controls
       eval_train[ri] = learner->tracker.evaluations_of_train[ri];
     }
 
+    List vd = List::create(
+      _["trace"]            = learner->tracker.save(),
+      _["evaluation.train"] = eval_train);
+    vd.attr("class") = "FMValidation";
+
     res = List::create(
       _["Model"]       = fm.save_model(),
-      _["Convergence"] = learner->convergent,
-      _["Validation"]  = List::create(
-        _["trace"]            = learner->tracker.save(),
-        _["evaluation.train"] = eval_train
-      )
+      _["Validation"]  = vd,
+      _["Convergence"] = learner->convergent
     );
   } else {
     res = List::create(_["Model"]       = fm.save_model(),
