@@ -7,7 +7,7 @@ Smatrix <- function(dgCMatrix, transpose = FALSE)
 
   stopifnot(class(dgCMatrix) == "dgCMatrix")
 
-  if (!transpose) dgCMatrix <- t(dgCMatrix)
+  if (!transpose) dgCMatrix <- Matrix::t(dgCMatrix)
   smatrix <- list(
     value = dgCMatrix@x,
     col_idx = dgCMatrix@i,
