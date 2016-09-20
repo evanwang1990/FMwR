@@ -2,7 +2,9 @@
 #define FM_MODEL_H_
 
 #include <Rcpp.h>
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 #include <assert.h>
 #include <omp.h>
 #include "../util/Dvector.h"

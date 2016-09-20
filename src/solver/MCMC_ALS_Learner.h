@@ -2,7 +2,9 @@
 #define MCMC_ALS_H_
 
 #include <Rcpp.h>
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 #include "../util/Macros.h"
 #include "../util/Random.h"
 #include "../util/Dvector.h"

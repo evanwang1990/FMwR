@@ -2,7 +2,9 @@
 #define FM_LEARN__
 
 #include <Rcpp.h>
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 #include <vector>
 #include <utility>
 #include "../util/Macros.h"

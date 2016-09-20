@@ -2,7 +2,9 @@
 #define SGD_H_
 
 #include <Rcpp.h>
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 #include "../util/Dvector.h"
 #include "../util/Dmatrix.h"
 #include "../util/Smatrix.h"

@@ -2,7 +2,9 @@
 #define FM_H_
 
 #include <Rcpp.h>
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 #include <map>
 #include <string>
 
