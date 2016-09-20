@@ -114,13 +114,14 @@ public:
     colmean.assign(as<NumericVector>(scale["mean"]));
     DVector<double> colstd;
     colstd.assign(as<NumericVector>(scale["std"]));
-    if (dim2 != colmean || dim2 != colstd) {
+    if (dim2 != colmean.size() || dim2 != colstd.size()) {
       stop("the length of scale:mean or scale:std is not equal");
     }
     for (uint p = 0; p < value.size(); ++p)
     {
-      if (colstd[p] != 0) {
-        value[p] = (value[p] - colmean[p]) / colstd[p];
+      int i = col_idx[p];
+      if (colstd[i] != 0) {
+        value[p] = (value[p] - colmean[i]) / colstd[i];
       }
     }
   }
