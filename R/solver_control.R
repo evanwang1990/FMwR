@@ -1,4 +1,4 @@
-solver.control <- function(max_iter, nthreads = 1, convergence = 1e-4, evaluation = "LL", solver = TDAP.solver())
+solver.control <- function(max_iter = 10000, nthreads = 1, convergence = 1e-4, evaluate.method = "LL", solver = TDAP.solver())
 {
   max_threads = parallel::detectCores()
   if (nthreads >= max_threads) {
@@ -6,9 +6,9 @@ solver.control <- function(max_iter, nthreads = 1, convergence = 1e-4, evaluatio
     nthreads = max_threads
   }
 
-  stopifnot(evaluation %in% c("AUC", "ACC", "LL", "RMSE", "MAE"))
+  stopifnot(evaluate.method %in% c("AUC", "ACC", "LL", "RMSE", "MAE"))
 
-  res <- list(nthreads = nthreads, max_iter = max_iter, convergence = convergence, evaluation = evaluation, solver = solver)
+  res <- list(nthreads = nthreads, max_iter = max_iter, convergence = convergence, evaluate.method = evaluate.method, solver = solver)
   class(res) <- "solver.control"
   res
 }
@@ -28,7 +28,7 @@ MCMC.solver <- function(...)
   controls <- control_assign(MCMC.solver.default, list(...))
 
   if (controls$is.default) {
-    message("Use default MCMC solver.\n\n")
+    message("Use default MCMC solver.\n")
   }
 
   controls$contr
@@ -49,7 +49,7 @@ ALS.solver <- function(...)
   controls <- control_assign(ALS.solver.default, list(...))
 
   if (controls$is.default) {
-    message("Use default ALS solver.\n\n")
+    message("Use default ALS solver.\n")
   }
 
   controls$contr
@@ -66,7 +66,7 @@ SGD.solver <- function(...)
   controls <- control_assign(SGD.solver.default, list(...))
 
   if (controls$is.default) {
-    message("Use default SGD solver.\n\n")
+    message("Use default SGD solver.\n")
   }
 
   controls$contr
@@ -85,7 +85,7 @@ FTRL.solver <- function(...)
   controls <- control_assign(FTRL.solver.default, list(...))
 
   if (controls$is.default) {
-    message("Use default FTRL solver. \n\n")
+    message("Use default FTRL solver. \n")
   }
 
   controls$contr
@@ -103,7 +103,7 @@ TDAP.solver <- function(...)
   controls <- control_assign(TDAP.solver.default, list(...))
 
   if (controls$is.default) {
-    message("Use default TDAP solver. \n\n")
+    message("Use default TDAP solver. \n")
   }
 
   controls$contr

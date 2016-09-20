@@ -1,7 +1,7 @@
-validation.control <- function(max_iter, step_size = -1, evaluation = "LL")
+validation.control <- function(step_size = -1, evaluate.method = "LL")
 {
-  stopifnot(evaluation %in% c("AUC", "ACC", "LL", "RMSE", "MAE"))
-  res <- list(max_iter = max_iter, step_size = step_size, evaluation = evaluation)
+  stopifnot(evaluate.method %in% c("AUC", "ACC", "LL", "RMSE", "MAE"))
+  res <- list(max_iter = 1, step_size = step_size, evaluate.method = evaluate.method)
   class(res) <- "validation.control"
   res
 }

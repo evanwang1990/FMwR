@@ -1,14 +1,14 @@
-model.control <- function(task = "CLASSIFICATION", solver = "TDAP", nthreads = 1, ...)
+model.control <- function(task = "CLASSIFICATION", solver = "TDAP", ...)
 {
   stopifnot(task %in% c("CLASSIFICATION", "REGRESSION"));
   stopifnot(solver %in% c("MCMC", "ALS", "SGD", "FTRL", "TDAP"));
   controls <- control_assign(model.control.default, list(...))
 
   if (controls$is.default) {
-    message("Use default model settings.\n\n")
+    message("Use default model settings.\n")
   }
 
-  res <- list(task = task, solver = solver, nthreads = nthreads, hyper.params = controls$contr)
+  res <- list(task = task, solver = solver, nthreads = 1, hyper.params = controls$contr)
   class(res) <- "model.control"
   res
 }
