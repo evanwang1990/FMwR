@@ -130,7 +130,7 @@ List FM(List data_, NumericVector target, List fm_controls, List solver_controls
   List res;
   if (learner->tracker.step_size > 0) {
     NumericVector eval_train(learner->tracker.record_cnter);
-    for (int ri = 0; ri < learner->tracker.record_cnter; ri++)
+    for (int ri = 0; ri < learner->tracker.record_cnter; ri++) // ri 1~record_cnter not 1~max_iter
     {
       eval_train[ri] = learner->tracker.evaluations_of_train[ri];
     }
@@ -149,6 +149,68 @@ List FM(List data_, NumericVector target, List fm_controls, List solver_controls
     res = List::create(_["Model"]       = fm.save_model(),
                        _["Convergence"] = learner->convergent); //TODO:save_model 优化
   }
-  res.attr("class") = "FM";
+
+  if (fm.TASK == CLASSIFICATION) {
+    res.attr("class") = "FM.c";
+  } else {
+    res.attr("class") = "FM.l";
+  }
+
   return res;
+}
+
+
+// [[Rcpp::export]]
+NumericVector FMPredict(List newdata, List model_list, int max_threads)
+{
+  // init newdata
+  SMatrix<float> m(newdata);
+  Data data;
+  data.add_data(&m);
+
+  // load model
+  Model fm;
+  fm.load_model(model_list);
+  fm.nthreads = max_threads;
+
+  // predict
+  DVector<double> pred(data.num_cases);
+  pred.init(0.0);
+  fm.predict_prob(data, pred);
+
+  return pred.to_rtype();
+}
+
+
+// [[Rcpp::export]]
+NumericVector FMValidate(List newdata, NumericVector newtg, List model_list, List trace, String type, int max_threads)
+{
+  // init newdata
+  SMatrix<float> m(newdata);
+  Data data;
+  data.add_data(&m);
+  DVector<float> tg;
+  tg.assign(newtg);
+  data.add_target(&tg);
+
+  // load model
+  Model fm;
+  fm.load_model(model_list);
+  fm.nthreads = max_threads;
+
+  // init validator
+  map<string, int> evaluations_map;
+  evaluations_map["LL"  ] =  000;
+  evaluations_map["AUC" ] =  111;
+  evaluations_map["ACC" ] =  222;
+  evaluations_map["RMSE"] =  333;
+  evaluations_map["MSE" ] =  444;
+  evaluations_map["MAE" ] =  555;
+
+  Validator validator;
+  validator.load(&fm, trace);
+  validator.type = evaluations_map[type];
+  validator.report(&fm, data);
+
+  return validator.evaluations_of_test.to_rtype();
 }
