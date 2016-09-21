@@ -20,6 +20,35 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// FMPredict
+NumericVector FMPredict(List newdata, List model_list, int max_threads);
+RcppExport SEXP FMwR_FMPredict(SEXP newdataSEXP, SEXP model_listSEXP, SEXP max_threadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type newdata(newdataSEXP);
+    Rcpp::traits::input_parameter< List >::type model_list(model_listSEXP);
+    Rcpp::traits::input_parameter< int >::type max_threads(max_threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(FMPredict(newdata, model_list, max_threads));
+    return rcpp_result_gen;
+END_RCPP
+}
+// FMValidate
+NumericVector FMValidate(List newdata, NumericVector newtg, List model_list, List trace, String type, int max_threads);
+RcppExport SEXP FMwR_FMValidate(SEXP newdataSEXP, SEXP newtgSEXP, SEXP model_listSEXP, SEXP traceSEXP, SEXP typeSEXP, SEXP max_threadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type newdata(newdataSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type newtg(newtgSEXP);
+    Rcpp::traits::input_parameter< List >::type model_list(model_listSEXP);
+    Rcpp::traits::input_parameter< List >::type trace(traceSEXP);
+    Rcpp::traits::input_parameter< String >::type type(typeSEXP);
+    Rcpp::traits::input_parameter< int >::type max_threads(max_threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(FMValidate(newdata, newtg, model_list, trace, type, max_threads));
+    return rcpp_result_gen;
+END_RCPP
+}
 // normalize
 List normalize(NumericMatrix matrix, const int nthreads);
 RcppExport SEXP FMwR_normalize(SEXP matrixSEXP, SEXP nthreadsSEXP) {
@@ -42,5 +71,17 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const int >::type nthreads(nthreadsSEXP);
     normalize1(matrix, scales, nthreads);
     return R_NilValue;
+END_RCPP
+}
+// NApredict
+NumericVector NApredict(NumericVector pred, IntegerVector nas);
+RcppExport SEXP FMwR_NApredict(SEXP predSEXP, SEXP nasSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type pred(predSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type nas(nasSEXP);
+    rcpp_result_gen = Rcpp::wrap(NApredict(pred, nas));
+    return rcpp_result_gen;
 END_RCPP
 }

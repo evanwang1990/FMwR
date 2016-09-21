@@ -5,11 +5,23 @@ FM <- function(data_, target, fm_controls, solver_controls, validation_controls)
     .Call('FMwR_FM', PACKAGE = 'FMwR', data_, target, fm_controls, solver_controls, validation_controls)
 }
 
+FMPredict <- function(newdata, model_list, max_threads) {
+    .Call('FMwR_FMPredict', PACKAGE = 'FMwR', newdata, model_list, max_threads)
+}
+
+FMValidate <- function(newdata, newtg, model_list, trace, type, max_threads) {
+    .Call('FMwR_FMValidate', PACKAGE = 'FMwR', newdata, newtg, model_list, trace, type, max_threads)
+}
+
 normalize <- function(matrix, nthreads = 1L) {
     .Call('FMwR_normalize', PACKAGE = 'FMwR', matrix, nthreads)
 }
 
 normalize1 <- function(matrix, scales, nthreads = 1L) {
     invisible(.Call('FMwR_normalize1', PACKAGE = 'FMwR', matrix, scales, nthreads))
+}
+
+NApredict <- function(pred, nas) {
+    .Call('FMwR_NApredict', PACKAGE = 'FMwR', pred, nas)
 }
 
