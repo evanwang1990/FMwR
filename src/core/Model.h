@@ -210,8 +210,8 @@ void Model::load_model(List model_list)
   num_factor         = (int)(model_control["factor.number"]);
   init_mean          = (double)(model_control["v.init_mean"]);
   init_stdev         = (double)(model_control["v.init_stdev"]);
-  l1_regv            = (double)(model_control["l1_regv"]);
-  l2_regv            = (double)(model_control["l2_regv"]);
+  l1_regv            = (double)(model_control["L1.v"]);
+  l2_regv            = (double)(model_control["L2.v"]);
   List model_params  = model_list["model.params"];
   w0                 = (double)(model_params["w0"]);
   w.assign(as<NumericVector>(model_params["w"]));
