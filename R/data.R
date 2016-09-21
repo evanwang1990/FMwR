@@ -1,8 +1,16 @@
-deal_data <- function(formula, data, na.action, normalize, scales, max_threads = 1)
+deal_data <- function(formula, data, na.action, normalize, scales, delete.y = FALSE, max_threads = 1)
 {
   if (class(formula) == "character")
     formula <<- as.formula(formula)
+  if (length(formula) != 3) {
+    stop("formula is not correct")
+  }
+
   mc <- match.call()
+  if (delete.y) {
+    mc$formula[[2]] <- NULL
+  }
+
   params <- match(c("formula", "data", "na.action"), names(mc), 0L)
   mc <- mc[c(1L, params)]
   mc$drop.unused.levels <- TRUE
@@ -11,9 +19,6 @@ deal_data <- function(formula, data, na.action, normalize, scales, max_threads =
 
   # Y
   Y <- model.response(mf)
-  if (is.null(Y)) {
-    stop("no response variable")
-  }
 
   # X
   mt <- terms(mf)
@@ -27,7 +32,7 @@ deal_data <- function(formula, data, na.action, normalize, scales, max_threads =
     if (length(tl) == length(dc) - 1) {
       dc <- dc[-1]
     } else {
-      dc <- dc[dc %in% tl]
+      dc <- dc[names(dc) %in% tl]
     }
 
     norm_vars <- names(dc[dc %in% c("numeric", "integer")])
@@ -47,6 +52,7 @@ deal_data <- function(formula, data, na.action, normalize, scales, max_threads =
     col_names <- names(data)
     if (dt_flag) {
       setDT(data)
+      data <- copy(data)
       for (norm_var in norm_vars) {
         set(x = data, j = match(norm_var, col_names), value = new_matrix[,norm_var])
       }
@@ -56,10 +62,14 @@ deal_data <- function(formula, data, na.action, normalize, scales, max_threads =
       }
     }
   }
+  if (!exists("scales")) {
+    scales <- NULL
+  }
+
   attr(mt, "intercept") <- 0
   X <- MatrixModels::model.Matrix(mt, data, sparse = TRUE)
   dimnames <- X@Dimnames[[2]]
   X <- Smatrix(X, FALSE)
 
-  list(X = X, Y = Y, scales = scales, dimnames = dimnames)
+  list(X = X, Y = Y, scales = scales, dimnames = dimnames, na.rows = attr(mf, "na.action"))
 }
