@@ -1,6 +1,9 @@
 fm <- function(formula, data, na.action = na.omit, normalize = TRUE, max_threads = 1, control)
 {
   # data
+  if (!is.data.frame(data)) {
+    stop("data must be a data.frame")
+  }
   mc <- match.call()
   m <- match(c("formula", "data", "na.action", "normalize", "max_threads"), names(mc), 0L)
   m <- mc[c(1L, m)]
@@ -43,5 +46,11 @@ fm <- function(formula, data, na.action = na.omit, normalize = TRUE, max_threads
 
   fit$Scaled <- dt[["scales"]]
   fit$Model$model.vars <- dt[["dimnames"]]
+  fit$Model$formula <- formula
+  if (control_default$validation$step_size > 0) {
+    attr(fit$Validation, "class") <- control_default$solver$evaluate.method
+  }
+  fit$Model <- fit$Model[match(c("formula", "model.control", "model.vars", "model.params"), names(fit$Model))]
+
   fit
 }
