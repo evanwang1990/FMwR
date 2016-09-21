@@ -10,6 +10,10 @@ export(
   "ALS.solver",
   "SGD.solver",
   "FTRL.solver",
-  "TDAP.solver"
+  "TDAP.solver",
+  "predict.FM.c",
+  "validate",
+  "validate.FM.c",
+  "plot.FM.c.v"
 )
 useDynLib(FMwR)
