@@ -28,7 +28,6 @@ protected:
   double z_w0;
   DVector<double> z_w;
   DMatrix<double> z_v;
-  // DVector<double>* sum;
 
 public:
   // decay rate

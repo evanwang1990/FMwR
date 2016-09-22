@@ -22,9 +22,6 @@ protected:
 
   double regw, regv;
 
-// protected:
-//   DVector<double>* sum;
-
 public:
   double learn_rate;
   bool l1_penalty;
