@@ -44,6 +44,7 @@ deal_data <- function(formula, data, na.action, normalize, scales, delete.y = FA
 
     if (missing(scales)) {
       scales <- normalize(matrix = new_matrix, nthreads = max_threads)
+      scales$xlevels <- .getXlevels(mt, mf)
     } else {
       normalize1(matrix = new_matrix, scales = scales, nthreads = max_threads)
     }
@@ -67,7 +68,7 @@ deal_data <- function(formula, data, na.action, normalize, scales, delete.y = FA
   }
 
   attr(mt, "intercept") <- 0
-  X <- MatrixModels::model.Matrix(mt, data, sparse = TRUE)
+  X <- MatrixModels::model.Matrix(mt, data, sparse = TRUE, xlev = scales$xlevels)
   dimnames <- X@Dimnames[[2]]
   X <- Smatrix(X, FALSE)
 
