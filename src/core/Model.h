@@ -108,7 +108,7 @@ void Model::predict_batch(Data& _data, DVector<double>& _out, DVector<double>* v
   uint _nc = pdata->ncol();
 
   if (_nr != _out.size()) { stop("length of output vector is not correct..."); }
-  if ((w.size() != _nc) || _nc != v.ncol()) { stop("number of input's features is not correct..."); }
+  if ((w.size() != _nc) || (num_factor > 0 && _nc != v.ncol())) { stop("number of input's features is not correct..."); }
 
   if (k0) { _out.init(w0); }
   else { _out.init(0.0); }
