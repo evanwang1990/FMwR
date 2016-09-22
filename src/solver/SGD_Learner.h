@@ -22,8 +22,8 @@ protected:
 
   double regw, regv;
 
-protected:
-  DVector<double>* sum;
+// protected:
+//   DVector<double>* sum;
 
 public:
   double learn_rate;

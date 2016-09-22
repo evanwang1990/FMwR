@@ -90,19 +90,6 @@ double fast_trnorm_right(double right, double mean, double stdev)
   return mean + stdev * fast_trnorm_right((right - mean) / stdev);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 double fast_pnorm(double x)
 {
   #include "RandomData.h"
@@ -135,7 +122,7 @@ uint random_select(int n)
 {
   if (n == 1) {
     return 1;
-  }  
+  }
   return (uint) (fast_runif() * n + 1);
 }
 

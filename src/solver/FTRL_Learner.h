@@ -21,7 +21,7 @@ protected:
   DVector<double> n_w;
   DMatrix<double> n_v;
 
-  DVector<double>* sum;
+  // DVector<double>* sum;
 
 public:
   // learning rate

@@ -41,9 +41,7 @@ validate.FM.c <- function(object, data = NULL, newdata = NULL, evaluate.method =
   val2 <- NULL
   if (!is.null(newdata)) {
     if (!is.data.frame(newdata)) stop("newdata is not a data.frame")
-    x1<<-newdata
     dt2 <- eval(as.call(list(quote(deal_data), formula, newdata, na.omit, normalize, scales, FALSE, max_threads)))
-    x2<<-newdata
     if (is.null(dt2[["Y"]])) {
       stop("no target variable in newdata")
     }
