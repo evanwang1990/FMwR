@@ -1,4 +1,4 @@
-deal_data <- function(formula, data, na.action, normalize, scales, delete.y = FALSE, max_threads = 1)
+deal_data <- function(formula, data, na.action, normalize, scales, delete.y = FALSE, transpose = FALSE, max_threads = 1)
 {
   if (class(formula) == "character")
     formula <<- as.formula(formula)
@@ -7,9 +7,6 @@ deal_data <- function(formula, data, na.action, normalize, scales, delete.y = FA
   }
 
   mc <- match.call()
-  if (delete.y) {
-    mc$formula[[2]] <- NULL
-  }
 
   params <- match(c("formula", "data", "na.action"), names(mc), 0L)
   mc <- mc[c(1L, params)]
@@ -22,6 +19,9 @@ deal_data <- function(formula, data, na.action, normalize, scales, delete.y = FA
 
   # X
   mt <- terms(mf)
+  if (delete.y) {
+    mt <- delete.response(mt)
+  }
   if (normalize) {
     tl <- attr(mt, "term.labels")
     illegal <- grepl(pattern = "[/+/^/*/-///(/)]", tl[!grepl("^(as.){0,}factor*+", tl, perl = TRUE)])
@@ -43,10 +43,10 @@ deal_data <- function(formula, data, na.action, normalize, scales, delete.y = FA
     }
 
     if (missing(scales)) {
-      scales <- normalize(matrix = new_matrix, nthreads = max_threads)
-      scales$xlevels <- .getXlevels(mt, mf)
+      scales_ <- normalize(matrix = new_matrix, nthreads = max_threads)
+      scales_$xlevels <- .getXlevels(mt, mf)
     } else {
-      normalize1(matrix = new_matrix, scales = scales, nthreads = max_threads)
+      normalize1(matrix = new_matrix, scales = scales_, nthreads = max_threads)
     }
 
     dt_flag <- suggest_package("data.table")
@@ -62,15 +62,28 @@ deal_data <- function(formula, data, na.action, normalize, scales, delete.y = FA
         data[norm_var] <- new_matrix[,norm_var]
       }
     }
-  }
-  if (!exists("scales")) {
-    scales <- NULL
+  } else {
+    if (missing(scales)) {
+      scales_ <- NULL
+    } else {
+      scales_ <- scales
+    }
   }
 
   attr(mt, "intercept") <- 0
-  X <- MatrixModels::model.Matrix(mt, data, sparse = TRUE, xlev = scales$xlevels)
-  dimnames <- X@Dimnames[[2]]
-  X <- Smatrix(X, FALSE)
+  if (missing(scales)) {
+    X <- MatrixModels::model.Matrix(mt, data, sparse = TRUE, xlev = NULL)
+  } else {
+    X <- MatrixModels::model.Matrix(mt, data, sparse = TRUE, xlev = scales_$xlevels)
+  }
 
-  list(X = X, Y = Y, scales = scales, dimnames = dimnames, na.rows = attr(mf, "na.action"))
+  dimnames <- X@Dimnames[[2]]
+  X_ <- Smatrix(X, FALSE)
+  if (transpose) {
+    X_t <- Smatrix(X, TRUE)
+  } else {
+    X_t <- NULL
+  }
+
+  list(X = X_, X_t = X_t, Y = Y, scales = scales_, dimnames = dimnames, na.rows = attr(mf, "na.action"))
 }
