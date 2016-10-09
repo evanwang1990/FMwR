@@ -28,7 +28,9 @@ List FM(List data_, NumericVector target, List fm_controls, List solver_controls
   evaluations_map["MAE" ] =  555;
 
   // init Data
-  SMatrix<float> m(data_);
+  List X = data_["X"];
+  SMatrix<float> m, m_t;
+  m.assign(X);
   Data data;
   data.add_data(&m);
   DVector<float> tg;
@@ -53,6 +55,13 @@ List FM(List data_, NumericVector target, List fm_controls, List solver_controls
   fm.SOLVER        = solvers_map[as<string>(fm_controls["solver"])];
   fm.TASK          = tasks_map[as<string>(fm_controls["task"])];
   fm.init();
+
+  if (fm.SOLVER <= ALS) {
+    List X_t = data_["X_t"];
+    m_t.assign(X_t);
+    data.add_data(&m_t);
+  }
+
 
   // init Metainfo
   DataMetaInfo meta(data.num_features); //TODO: set variables' groups
