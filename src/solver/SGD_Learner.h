@@ -88,8 +88,10 @@ void SGD_Learner::learn(Data& train)
 
       // update absolute value of l1 penalty
       if (l1_penalty) {
-        u_w += learn_rate * regw / train.num_cases;
-        u_v += learn_rate * regv / train.num_cases;
+        // u_w += learn_rate * regw / train.num_cases;
+        // u_v += learn_rate * regv / train.num_cases;
+        u_w += learn_rate * regw;
+        u_v += learn_rate * regv;
       }
 
       SMatrix<float>::Iterator it(*pdata, i);
