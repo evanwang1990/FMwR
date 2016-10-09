@@ -22,7 +22,27 @@ public:
     : dim1(0), dim2(0), size(0), transposed(false)
   {}
 
-  SMatrix(List& _list) //TODO:统一数据类型
+  SMatrix(List _list) //TODO:统一数据类型
+  {
+    if (as<String>(_list.attr("class")) != "SMatrix") { stop("The input is not SMatrix type..."); }
+    transposed             = as<bool>(_list.attr("transposed"));
+    IntegerVector dim      = _list["dim"];
+    dim1                   = dim[0];
+    dim2                   = dim[1];
+    size                   = _list["size"];
+    IntegerVector row_size = _list["row_size"];
+    if (dim1 != row_size.size()) { stop("the length of input's row_size is not correct..."); }
+    value.assign(_list["value"]);
+    col_idx.assign(_list["col_idx"]);
+    row_idx.setSize(dim1 + 1); //TODO: the last element is actually the end!!!
+    row_idx.init(0);
+    for (uint i = 0; i < dim1; ++i)
+    {
+      row_idx[i + 1] = row_idx[i] + row_size[i];
+    }
+  }
+
+  void assign(List _list)
   {
     if (as<String>(_list.attr("class")) != "SMatrix") { stop("The input is not SMatrix type..."); }
     transposed             = as<bool>(_list.attr("transposed"));
