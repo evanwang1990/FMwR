@@ -1,11 +1,11 @@
 Package: FMwR
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Factorization Machines with R
 Version: 0.1
 Date: 2016-04-28
 Author: Evan Wang
 Maintainer: Evan Wang <evanwang1990@gmail.com>
-Description: Factorization Machines with R
+Description: Factorization Machines with R based on libfm
 License: GLP-3.0
 LazyData: TRUE
 Imports:
