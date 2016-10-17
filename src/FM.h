@@ -8,9 +8,9 @@
 #include <map>
 #include <string>
 
+#include "util/Macros.h"
 #include "util/Dmatrix.h"
 #include "util/Dvector.h"
-#include "util/Macros.h"
 #include "util/Random.h"
 #include "util/Smatrix.h"
 #include "util/Swrap.h"
