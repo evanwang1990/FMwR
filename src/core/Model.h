@@ -161,15 +161,16 @@ void Model::predict_batch(Data& _data, DVector<double>& _out, DVector<double>* v
 void Model::predict_prob(Data& _data, DVector<double>& _out)
 {
   predict_batch(_data, _out);
+  uint _out_size = _out.size();
   if (SOLVER == MCMC || SOLVER == ALS) {
     #pragma omp parallel for num_threads(nthreads)
-    for (uint i = 0; i < _out.size(); ++i)
+    for (uint i = 0; i < _out_size; ++i)
     {
       _out[i] = fast_pnorm(_out[i]);
     }
   } else {
     #pragma omp parallel for num_threads(nthreads)
-    for (uint i = 0; i < _out.size(); ++i)
+    for (uint i = 0; i < _out_size; ++i)
     {
       _out[i] = 1.0 / (1.0 + exp(-_out[i]));
     }
@@ -201,6 +202,18 @@ List Model::save_model()
 
 void Model::load_model(List model_list)
 {
+  map<string, int> solvers_map;
+  solvers_map["MCMC"] = 100;
+  solvers_map["ALS" ] = 200;
+  solvers_map["SGD" ] = 300;
+  solvers_map["FTRL"] = 400;
+  solvers_map["TDAP"] = 500;
+
+  map<string, int> tasks_map;
+  tasks_map["CLASSIFICATION"] = 10;
+  tasks_map["REGRESSION"    ] = 20;
+  tasks_map["RANKING"       ] = 30;
+
   List model_control = model_list["model.control"];
   k0                 = (bool)(model_control["keep.w0"]);
   l2_reg0            = (double)(model_control["L2.w0"]);
@@ -214,6 +227,8 @@ void Model::load_model(List model_list)
   l2_regv            = (double)(model_control["L2.v"]);
   List model_params  = model_list["model.params"];
   w0                 = (double)(model_params["w0"]);
+  SOLVER             = solvers_map[as<string>(model_list.attr("solver"))];
+  TASK               = tasks_map[as<string>(model_list.attr("task"))];
   w.assign(as<NumericVector>(model_params["w"]));
   v.assign(as<NumericMatrix>(model_params["v"]));
 }

@@ -148,7 +148,18 @@ void TDAP_Learner::learn(Data& train)
         if (ii == tracker.step_size) { ii = 0; }
         if (ii == 0 || iter == max_iter - 1) {
           DVector<double> y_hat_(train.num_cases);
-          fm->predict_prob(train, y_hat_);
+          if (fm->TASK == REGRESSION) {
+            fm->predict_batch(train, y_hat_);
+            #pragma omp parallel for num_threads(nthreads)
+            for (uint i = 0; i < train.num_cases; i++) {
+              if (y_hat_[i] < min_target)
+                y_hat_[i] = min_target;
+              else if (y_hat_[i] > max_target)
+                y_hat_[i] = max_target;
+            }
+          } else {
+            fm->predict_prob(train, y_hat_);
+          }
           double eval_score = tracker.evaluate(fm, y_hat_, *train.target);
           if (iter > tracker.step_size && abs((eval_score - OLD(eval_score)) / (OLD(eval_score) + 1e-30)) <= conv_condition) {
             conv_times ++;
@@ -212,7 +223,7 @@ double TDAP_Learner::calculate_grad_mult(double& y_hat, float& y_true)
   if (fm->TASK == REGRESSION) {
     y_hat = min(max_target, y_hat);
     y_hat = max(min_target, y_hat);
-    mult = -(y_true - y_hat);
+    mult = -(y_true - y_hat);cout<<y_hat<<" "<<y_true<<endl;
   } else if (fm->TASK == CLASSIFICATION) {
     mult = - y_true * (1.0 - 1.0 / (1.0 + exp(-y_true * y_hat)));
   }

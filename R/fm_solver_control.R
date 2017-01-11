@@ -4,13 +4,11 @@
 ##' Auxiliary functions for optimization routines
 ##'
 ##' @usage
-##' solver.control(max_iter = 10000, nthreads = 1, convergence = 1e-4, evaluate.method = "LL", solver = TDAP.solver())
+##' solver.control(max_iter = 10000, nthreads = 1, convergence = 1e-4, evaluate.metric = "LL", solver = TDAP.solver())
 ##'
 ##' @param max_iter integer giving maximal number of iterations, 25 for MCMC/ALS and 10000 for other optimization routines by default
 ##'
 ##' @param nthreads integer, number of threads to speed up computing, \strong{openmp} should be supported
-##'
-##' @param convergence,evaluate.method control how to early stop
 ##'
 ##' @param solver function to set parameters of optimization routine
 ##'
@@ -20,26 +18,15 @@
 ##'
 ##' By now, only MCMC and ALS support parallel computing. And if openmp is not supported, nthreads makes no sense.
 ##'
-##' Early stopping is controlled by \strong{evaludate.method} and \strong{convergence}. If the difference of the value between two interations, which is
-##' calculated by \code{evaluate.method}, is smaller than \code{convergence} for three times in a row, iteration will stop early.
-##' \code{evaluate.method} includes:
-##' \itemize{
-##' \item "LL":loglikehood
-##' \item "AUC": auc
-##' \item "ACC": accurancy
-##' \item "RMSE": root mean square err
-##' \item "MAE": mean absolute error
-##' }
-##' "LL","AUC","ACC" are for CLASSIFICATION task. And "RMSE","MAE" are for REGRESSION task.
-##'
 ##' \strong{solver} is a function to set parameters of optimization routine further, including \link{ALS.solver}
 ##' \link{MCMC.solver} \link{SGD.solver} \link{TDAP.solver} \link{FTRL.solver}
 
-solver.control <- function(max_iter = 10000, nthreads = 1, convergence = 1e-4, evaluate.method = "LL", solver = TDAP.solver())
+solver.control <- function(max_iter = 10000, nthreads = 1, solver = TDAP.solver())
 {
   solver_ <- deparse(substitute(solver))
-  if (grepl("MCMC|ALS", solver_)) {
-    max_iter <- 25
+  if (grepl("MCMC|ALS", solver_) && max_iter > 100) {
+    warning("the maximum number of iteratorions for MCMC/ALS solver is 100, so max_iter will be set to 100")
+    max_iter <- min(max_iter, 100)
   }
 
   max_threads = parallel::detectCores()
@@ -48,9 +35,7 @@ solver.control <- function(max_iter = 10000, nthreads = 1, convergence = 1e-4, e
     nthreads = max_threads
   }
 
-  stopifnot(evaluate.method %in% c("AUC", "ACC", "LL", "RMSE", "MAE"))
-
-  res <- list(nthreads = nthreads, max_iter = max_iter, convergence = convergence, evaluate.method = evaluate.method, solver = solver)
+  res <- list(nthreads = nthreads, max_iter = max_iter, solver = solver)
   class(res) <- "solver.control"
   res
 }
@@ -77,9 +62,7 @@ MCMC.solver <- function(...)
 {
   controls <- control_assign(MCMC.solver.default, list(...))
 
-  if (controls$is.default) {
-    message("Use default MCMC solver.\n")
-  }
+  attr(controls$contr, "solver") <- "MCMC"
 
   controls$contr
 }
@@ -105,9 +88,7 @@ ALS.solver <- function(...)
 {
   controls <- control_assign(ALS.solver.default, list(...))
 
-  if (controls$is.default) {
-    message("Use default ALS solver.\n")
-  }
+  attr(controls$contr, "solver") <- "ALS"
 
   controls$contr
 }
@@ -126,9 +107,7 @@ SGD.solver <- function(...)
 {
   controls <- control_assign(SGD.solver.default, list(...))
 
-  if (controls$is.default) {
-    message("Use default SGD solver.\n")
-  }
+  attr(controls$contr, "solver") <- "SGD"
 
   controls$contr
 }
@@ -152,9 +131,7 @@ FTRL.solver <- function(...)
 {
   controls <- control_assign(FTRL.solver.default, list(...))
 
-  if (controls$is.default) {
-    message("Use default FTRL solver. \n")
-  }
+  attr(controls$contr, "solver") <- "FTRL"
 
   controls$contr
 }
@@ -176,9 +153,7 @@ TDAP.solver <- function(...)
 {
   controls <- control_assign(TDAP.solver.default, list(...))
 
-  if (controls$is.default) {
-    message("Use default TDAP solver. \n")
-  }
+  attr(controls$contr, "solver") <- "TDAP"
 
   controls$contr
 }

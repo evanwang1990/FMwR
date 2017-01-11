@@ -2,6 +2,7 @@
 #ifdef _OPENMP
 #include <omp.h>
 #endif
+#include <vector>
 using namespace Rcpp;
 using namespace std;
 
@@ -129,4 +130,47 @@ NumericVector NApredict(NumericVector pred, IntegerVector nas)
   }
 
   return(napred);
+}
+
+
+// [[Rcpp::export]]
+List transpose(List sparse_matrix)
+{
+  vector<double> value = as< vector<double> >(sparse_matrix["value"]);
+  vector<int> col_idx  = as< vector<int> >(sparse_matrix["col_idx"]);
+  vector<int> row_size = as< vector<int> >(sparse_matrix["row_size"]);
+  vector<int> dim      = as< vector<int> >(sparse_matrix["dim"]);
+
+  int nrow_t = dim[1], ncol_t = dim[0];
+  vector<int> row_p(ncol_t);
+  int tmp = 0;
+  for (int i = 0; i < ncol_t; ++i) {
+    row_p[i] = tmp;
+    tmp += row_size[i];
+  }
+
+  vector<double> value_t(value.size());
+  vector<int> col_idx_t(value.size());
+  vector<int> row_size_t(ncol_t, 0);
+  vector<double>::iterator value_t_p = value_t.begin();
+  vector<int>::iterator col_idx_t_p  = col_idx_t.begin();
+  vector<int>::iterator row_size_t_p = row_size_t.begin();
+  for (int i = 0; i < nrow_t; i++) {
+    for (int j = 0; j < ncol_t; j++) {
+      if (col_idx[row_p[j]] == i) {
+        *value_t_p = value[row_p[j]]; value_t_p ++; row_p[j] ++;
+        *col_idx_t_p = j; col_idx_t_p ++;
+        *row_size_t_p += 1;
+      }
+    }
+    row_size_t_p ++;
+  }
+
+  return List::create(
+    _["value"] = value_t,
+    _["col_idx"] = col_idx_t,
+    _["row_size"] = row_size_t,
+    _["dim"] = IntegerVector::create(nrow_t, ncol_t),
+    _["size"] = as<int>(sparse_matrix["size"])
+  );
 }

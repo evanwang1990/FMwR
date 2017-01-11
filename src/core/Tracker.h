@@ -1,5 +1,5 @@
-#ifndef VALIDATOR_H_
-#define VALIDATOR_H_
+#ifndef Tracker_H_
+#define Tracker_H_
 
 #include <Rcpp.h>
 #include "Evaluation.h"
@@ -14,7 +14,7 @@ struct Params {
   DMatrix<double> v;
 };
 
-class Validator
+class Tracker
 {
 public:
   int max_iter;
@@ -29,16 +29,16 @@ public:
   int type;
 
 public:
-  Validator() : step_size(-1), type(LL) {}
+  Tracker() : step_size(-1), type(LL) {}
   void init();
   void record(Model* fm, int iter_idx, double eval_score);
   double evaluate(Model* fm, DVector<double>& y_hat, DVector<float>& y_true);
-  void report(Model* fm, Data& data);
+  void report(Model* fm, Data& data, double min_target, double max_target);
   List save();
   void load(Model* fm, List valid);
 };
 
-void Validator::init()
+void Tracker::init()
 {
   record_cnter = 0;
   record_times = (int)(std::ceil(((double)max_iter - 0.5) / (double)step_size)) + 1;
@@ -52,7 +52,7 @@ void Validator::init()
   // evaluations_of_test.setSize(record_times);
 }
 
-void Validator::record(Model* fm, int iter_idx, double eval_score)
+void Tracker::record(Model* fm, int iter_idx, double eval_score)
 {
   Params& P = parameters[record_cnter];
   if (fm->k0) { P.w0 = fm->w0; }
@@ -63,12 +63,12 @@ void Validator::record(Model* fm, int iter_idx, double eval_score)
   record_cnter ++;
 }
 
-double Validator::evaluate(Model* fm, DVector<double>& y_hat, DVector<float>& y_true)
+double Tracker::evaluate(Model* fm, DVector<double>& y_hat, DVector<float>& y_true)
 {
   return evaluates(fm, y_hat, y_true, type);
 }
 
-void Validator::report(Model* fm, Data& data)
+void Tracker::report(Model* fm, Data& data, double min_target, double max_target)
 {
   evaluations_of_test.setSize(record_times);
   DVector<double> out(data.num_cases);
@@ -78,12 +78,23 @@ void Validator::report(Model* fm, Data& data)
     if (fm->k0) { fm->w0 = P.w0; }
     if (fm->k1) { fm->w.assign(P.w); }
     if (fm->num_factor > 0) { fm->v.assign(P.v); }
-    fm->predict_prob(data, out);
+    if (fm->TASK == REGRESSION) {
+      fm->predict_batch(data, out);
+      #pragma omp parallel for num_threads(fm->nthreads)
+      for (uint i = 0; i < data.num_cases; i++) {
+        if (out[i] < min_target)
+          out[i] = min_target;
+        else if (out[i] > max_target)
+          out[i] = max_target;
+      }
+    } else {
+      fm->predict_prob(data, out);
+    }
     evaluations_of_test[i] = evaluate(fm, out, *data.target);
   }
 }
 
-List Validator::save()
+List Tracker::save()
 {
   //TODO: record_times -> record_cnter ??
   List valid(record_cnter + 1);
@@ -105,7 +116,7 @@ List Validator::save()
   return valid;
 }
 
-void Validator::load(Model* fm, List valid)
+void Tracker::load(Model* fm, List valid)
 {
   record_times = valid.size() - 1;
   parameters.setSize(record_times);

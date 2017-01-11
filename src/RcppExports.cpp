@@ -6,46 +6,46 @@
 using namespace Rcpp;
 
 // FM
-List FM(List data_, NumericVector target, List fm_controls, List solver_controls, List validation_controls);
-RcppExport SEXP FMwR_FM(SEXP data_SEXP, SEXP targetSEXP, SEXP fm_controlsSEXP, SEXP solver_controlsSEXP, SEXP validation_controlsSEXP) {
+List FM(List data_, IntegerVector normalize, List fm_controls, List solver_controls, List track_controls);
+RcppExport SEXP FMwR_FM(SEXP data_SEXP, SEXP normalizeSEXP, SEXP fm_controlsSEXP, SEXP solver_controlsSEXP, SEXP track_controlsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< List >::type data_(data_SEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type target(targetSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type normalize(normalizeSEXP);
     Rcpp::traits::input_parameter< List >::type fm_controls(fm_controlsSEXP);
     Rcpp::traits::input_parameter< List >::type solver_controls(solver_controlsSEXP);
-    Rcpp::traits::input_parameter< List >::type validation_controls(validation_controlsSEXP);
-    rcpp_result_gen = Rcpp::wrap(FM(data_, target, fm_controls, solver_controls, validation_controls));
+    Rcpp::traits::input_parameter< List >::type track_controls(track_controlsSEXP);
+    rcpp_result_gen = Rcpp::wrap(FM(data_, normalize, fm_controls, solver_controls, track_controls));
     return rcpp_result_gen;
 END_RCPP
 }
 // FMPredict
-NumericVector FMPredict(List newdata, List model_list, int max_threads);
-RcppExport SEXP FMwR_FMPredict(SEXP newdataSEXP, SEXP model_listSEXP, SEXP max_threadsSEXP) {
+NumericVector FMPredict(List newdata, bool normalize, List model_list, int max_threads);
+RcppExport SEXP FMwR_FMPredict(SEXP newdataSEXP, SEXP normalizeSEXP, SEXP model_listSEXP, SEXP max_threadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< List >::type newdata(newdataSEXP);
+    Rcpp::traits::input_parameter< bool >::type normalize(normalizeSEXP);
     Rcpp::traits::input_parameter< List >::type model_list(model_listSEXP);
     Rcpp::traits::input_parameter< int >::type max_threads(max_threadsSEXP);
-    rcpp_result_gen = Rcpp::wrap(FMPredict(newdata, model_list, max_threads));
+    rcpp_result_gen = Rcpp::wrap(FMPredict(newdata, normalize, model_list, max_threads));
     return rcpp_result_gen;
 END_RCPP
 }
-// FMValidate
-NumericVector FMValidate(List newdata, NumericVector newtg, List model_list, List trace, String type, int max_threads);
-RcppExport SEXP FMwR_FMValidate(SEXP newdataSEXP, SEXP newtgSEXP, SEXP model_listSEXP, SEXP traceSEXP, SEXP typeSEXP, SEXP max_threadsSEXP) {
+// FMTrack
+NumericVector FMTrack(List newdata, List model_list, bool normalize, String type, int max_threads);
+RcppExport SEXP FMwR_FMTrack(SEXP newdataSEXP, SEXP model_listSEXP, SEXP normalizeSEXP, SEXP typeSEXP, SEXP max_threadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< List >::type newdata(newdataSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type newtg(newtgSEXP);
     Rcpp::traits::input_parameter< List >::type model_list(model_listSEXP);
-    Rcpp::traits::input_parameter< List >::type trace(traceSEXP);
+    Rcpp::traits::input_parameter< bool >::type normalize(normalizeSEXP);
     Rcpp::traits::input_parameter< String >::type type(typeSEXP);
     Rcpp::traits::input_parameter< int >::type max_threads(max_threadsSEXP);
-    rcpp_result_gen = Rcpp::wrap(FMValidate(newdata, newtg, model_list, trace, type, max_threads));
+    rcpp_result_gen = Rcpp::wrap(FMTrack(newdata, model_list, normalize, type, max_threads));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -82,6 +82,17 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type pred(predSEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type nas(nasSEXP);
     rcpp_result_gen = Rcpp::wrap(NApredict(pred, nas));
+    return rcpp_result_gen;
+END_RCPP
+}
+// transpose
+List transpose(List sparse_matrix);
+RcppExport SEXP FMwR_transpose(SEXP sparse_matrixSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type sparse_matrix(sparse_matrixSEXP);
+    rcpp_result_gen = Rcpp::wrap(transpose(sparse_matrix));
     return rcpp_result_gen;
 END_RCPP
 }

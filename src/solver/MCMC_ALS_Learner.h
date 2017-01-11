@@ -103,8 +103,20 @@ void MCMC_ALS_Learner::learn(Data& train)
       if (ii == tracker.step_size) { ii = 0; }
       if (ii == 0 || iter_cntr == max_iter - 1) {
         DVector<double> y_hat_(train.num_cases);
-        for (uint i = 0; i < train.num_cases; ++i) {
-          y_hat_[i] = fast_pnorm(train_err[i]);
+        if (fm->TASK == REGRESSION) {
+          #pragma omp parallel for num_threads(nthreads)
+          for (uint i = 0; i < train.num_cases; ++i) {
+            y_hat_[i] = train_err[i];
+            if (y_hat_[i] < min_target)
+              y_hat_[i] = min_target;
+            else if (y_hat_[i] > max_target)
+              y_hat_[i] = max_target;
+          }
+        } else {
+          #pragma omp parallel for num_threads(nthreads)
+          for (uint i = 0; i < train.num_cases; ++i) {
+            y_hat_[i] = fast_pnorm(train_err[i]);
+          }
         }
         double eval_score = tracker.evaluate(fm, y_hat_, *train.target);
         tracker.record(fm, iter_cntr, eval_score);
@@ -136,11 +148,11 @@ void MCMC_ALS_Learner::update_all(Data& train, DVector<double>& error, DVector<d
     update_w(train, error);
   }
 
-  if (fm->num_factor > 0) {
-    update_v_lambda();
-    update_v_mu();
-    update_v(train, error, v_q);
-  }
+  // if (fm->num_factor > 0) {
+  //   update_v_lambda();
+  //   update_v_mu();
+  //   update_v(train, error, v_q);
+  // }
 }
 
 
@@ -191,12 +203,12 @@ void MCMC_ALS_Learner::update_w(Data& train, DVector<double>& error)
   #pragma omp parallel
   {
     // update w
-    #pragma omp for private(w_mean, w_var, OLD(w), TMP(w), w_diff, update_err, end)
-    for (uint i = 0; i < tdata->nrow(); i++)
+    #pragma omp for private(w_mean, w_var, OLD(w), TMP(w), w_diff, val_, j, g, end, update_err)
+    for (uint i = 0; i < train.num_features; i++)
     {
       end = tdata->row_idx[i+1];
-      w_mean = 0;
-      w_var  = 0;
+      w_mean = 0.0;
+      w_var  = 0.0;
       OLD(w) = w[i];
       TMP(w) = w[i];
       g = meta->attr_group[i];
@@ -237,7 +249,7 @@ void MCMC_ALS_Learner::update_w(Data& train, DVector<double>& error)
 
     // completely update errors
     #pragma omp for private(tot_reduce, error_, j)
-    for (uint i = 0; i < error.size(); ++i)
+    for (uint i = 0; i < train.num_cases; ++i)
     {
       tot_reduce = 0;
       error_ = error[i];
@@ -355,8 +367,7 @@ void MCMC_ALS_Learner::update_alpha(Data& train, DVector<double>& error)
 
   double OLD(alpha) = alpha;
   double TMP(alpha);
-  TMP(alpha) = Rf_rgamma(alpha_n / 2.0, gamma_n / 2.0);
-
+  TMP(alpha) = Rf_rgamma(alpha_n / 2.0, 2.0/gamma_n);
   CHECK_PARAM(alpha,);
   alpha = TMP(alpha);
 }
@@ -416,7 +427,7 @@ void MCMC_ALS_Learner::update_w_lambda()
     double OLD(w_lambda) = w_lambda[g];
 
     if (do_sample) {
-      TMP(w_lambda) = Rf_rgamma(w_lambda_alpha / 2.0, w_lambda_gamma[g] / 2.0);
+      TMP(w_lambda) = Rf_rgamma(w_lambda_alpha / 2.0, 2.0 / w_lambda_gamma[g]);
     } else {
       TMP(w_lambda) = w_lambda_alpha / w_lambda_gamma[g];
     }
@@ -487,7 +498,7 @@ void MCMC_ALS_Learner::update_v_lambda()
       double OLD(v_lambda) = v_lambda(g, f);
 
       if (do_sample) {
-        TMP(v_lambda) = Rf_rgamma(v_lambda_alpha / 2.0, v_lambda_gamma[g] / 2.0);
+        TMP(v_lambda) = Rf_rgamma(v_lambda_alpha / 2.0, 2.0 / v_lambda_gamma[g]);
       } else {
         TMP(v_lambda) = v_lambda_alpha / v_lambda_gamma[g];
       }

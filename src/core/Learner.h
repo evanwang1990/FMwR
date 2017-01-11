@@ -13,13 +13,13 @@
 #include "Data.h"
 #include "Model.h"
 #include "Evaluation.h"
-#include "Validator.h"
+#include "Tracker.h"
 using namespace Rcpp;
 
 class Learner
 {
 public:
-  friend class Validator;
+  friend class Tracker;
 
 public:
   DataMetaInfo* meta;
@@ -31,7 +31,7 @@ public:
 
 // validation
 public:
-  Validator tracker;
+  Tracker tracker;
   int type;
 
 // convergence condtions

@@ -28,10 +28,8 @@ public:
 
 class Data
 {
-protected:
-  bool has_x, has_xt;
-
 public:
+  bool has_x, has_xt;
   SMatrix<float>* data_t;
   SMatrix<float>* data;
   DVector<float>* target;

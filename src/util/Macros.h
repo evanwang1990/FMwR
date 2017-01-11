@@ -34,11 +34,7 @@ typedef unsigned int uint;
 
 #define CHECK_PARAM(_X_, _ACTION_)                             \
 {                                                              \
-  if (R_IsNaN(TMP(_X_))) {                                     \
-    TMP(_X_) = OLD(_X_);                                       \
-    _ACTION_;}                                                 \
-                                                               \
-  if (TMP(_X_) == R_PosInf || TMP(_X_) == R_NegInf) {          \
+  if (R_IsNaN(TMP(_X_)) || TMP(_X_) == R_PosInf || TMP(_X_) == R_NegInf) { \
     TMP(_X_) = OLD(_X_);                                       \
     _ACTION_;}                                                 \
 }

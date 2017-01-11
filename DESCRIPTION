@@ -11,8 +11,7 @@ LazyData: TRUE
 Imports:
     Rcpp (>= 0.12.2),
     parallel (>= 3.2.2),
-    Matrix (>= 1.2-7.1),
-    MatrixModels (>= 0.4-1)
+    Matrix
 Suggests:
     data.table (>= 1.9.6),
     ggplot2,

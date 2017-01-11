@@ -4,19 +4,19 @@
 \alias{model.control}
 \title{Auxiliary for Controlling FM Fitting}
 \usage{
-model.control(tast = "CLASSIFICATION", solver = "TDAP")
+model.control(task = "CLASSIFICATION", solver = "TDAP")
 }
 \arguments{
 \item{task}{A character string naming the task for FM model, such as
 "CLASSIFICATION", "REGRESSION"}
 
+\item{...}{a list of parameters for controlling the fitting process}
+
 \item{solver}{A character string naming an optimization routine of FM model, the default
 solver is "TDAP"}
-
-\item{...}{a list of parameters for controlling the fitting process}
 }
 \description{
-Auxiliary function for \code{\link{fm}} fitting.
+Auxiliary function for \code{\link{fm.train}} fitting.
 }
 \details{
 FMwR provide many optimization routines including:

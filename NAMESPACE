@@ -2,18 +2,23 @@ importFrom(Rcpp, evalCpp)
 importFrom(parallel, detectCores)
 importFrom(MatrixModels, model.Matrix)
 export(
-  "fm",
+  "fm.matrix",
+  "fm.matrix.dgCMatrix",
+  "fm.matrix.matrix",
+  "fm.matrix.data.frame",
+  "fm.train",
   "model.control",
   "solver.control",
-  "validation.control",
+  "track.control",
   "MCMC.solver",
   "ALS.solver",
   "SGD.solver",
   "FTRL.solver",
   "TDAP.solver",
-  "predict.FM.c",
-  "validate",
-  "validate.FM.c",
-  "plot.FM.c.v"
+  "predict.FM",
+  "fm.track",
+  "fm.track.FM",
+  "plot.FMTrace",
+  "dim.fm.matrix"
 )
 useDynLib(FMwR)

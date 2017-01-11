@@ -24,7 +24,6 @@ public:
 
   SMatrix(List _list) //TODO:统一数据类型
   {
-    if (as<String>(_list.attr("class")) != "SMatrix") { stop("The input is not SMatrix type..."); }
     transposed             = as<bool>(_list.attr("transposed"));
     IntegerVector dim      = _list["dim"];
     dim1                   = dim[0];
@@ -44,7 +43,6 @@ public:
 
   void assign(List _list)
   {
-    if (as<String>(_list.attr("class")) != "SMatrix") { stop("The input is not SMatrix type..."); }
     transposed             = as<bool>(_list.attr("transposed"));
     IntegerVector dim      = _list["dim"];
     dim1                   = dim[0];
@@ -97,29 +95,36 @@ public:
 
   uint nvalues() const { return size; }
 
-  List scales()
+  List scales(IntegerVector norm_columns)
   {
     DVector<double> colSum(dim2);
     colSum.init(0.0);
     DVector<double> colSumSqr(dim2);
     colSumSqr.init(0.0);
-    for (uint row = 0; row < dim1; row ++)
+    uint idx; double val;
+    for (uint p = 0; p < size; ++p) {
+      idx = col_idx[p];
+      val = value[p];
+      colSum[idx] += val;
+      colSumSqr[idx] += val * val;
+    }
+
+    for (uint col = 0, i = 0; col < dim2; col ++)
     {
-      uint begin = row_idx[row];
-      uint end = row_idx[row + 1];
-      for (uint p = begin; p < end; ++p)
-      {
-        uint idx = col_idx[p];
-        double val = value[p];
-        colSum[idx] += val;
-        colSumSqr[idx] += val * val;
+      if (col == (uint)norm_columns[i]) {
+        colSumSqr[col] = std::sqrt(colSumSqr[col] / (dim1 - 1) - colSum[col] * colSum[col] / (dim1 * (dim1 - 1)));
+        colSum[col] /= dim1;
+        i++;
+      } else {
+        colSumSqr[col] = 1.0;
+        colSum[col] = 0.0;
       }
     }
 
-    for (uint col = 0; col < dim2; col ++)
-    {
-      colSumSqr[col] = std::sqrt(colSumSqr[col] / (dim1 - 1) - colSum[col] * colSum[col] / (dim1 * (dim1 - 1)));
-      colSum[col] /= dim1;
+    for (uint p = 0; p < size; ++p) {
+      idx = col_idx[p];
+      value[p] -= colSum[idx];
+      value[p] /= (colSumSqr[idx] + 1e-30);
     }
 
     return List::create(
@@ -142,6 +147,38 @@ public:
       int i = col_idx[p];
       if (colstd[i] != 0) {
         value[p] = (value[p] - colmean[i]) / colstd[i];
+      }
+    }
+  }
+
+  void transpose(SMatrix<T> &mt)
+  {
+    mt.dim1 = dim2;
+    mt.dim2 = dim1;
+    mt.size = size;
+    mt.transposed = true;
+    mt.row_idx.setSize(mt.dim1 + 1);
+    mt.row_idx.init(0);
+    mt.col_idx.setSize(mt.size);
+    mt.value.setSize(mt.size);
+
+    DVector<uint>row_p;
+    row_p.assign(row_idx);
+    T* value_p = mt.value.begin();
+    uint* row_idx_p = mt.row_idx.begin();
+    uint* col_idx_p = mt.col_idx.begin();
+
+    for (uint i = 0; i < dim2; i++) {
+      row_idx_p ++;
+      *row_idx_p = *(row_idx_p - 1);
+      for (uint j = 0; j < dim1; j++) {
+        uint &value_idx = row_p[j];
+        if (col_idx[value_idx] == i) {
+          *value_p = value[value_idx];  value_p ++;
+          *col_idx_p = j; col_idx_p ++;
+          *row_idx_p += 1;
+          if (value_idx < row_p[j+1] - 1) value_idx ++;
+        }
       }
     }
   }

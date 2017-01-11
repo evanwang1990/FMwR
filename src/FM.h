@@ -19,7 +19,7 @@
 #include "core/Model.h"
 #include "core/Learner.h"
 #include "core/Evaluation.h"
-#include "core/Validator.h"
+#include "core/Tracker.h"
 
 #include "solver/MCMC_ALS_Learner.h"
 #include "solver/SGD_Learner.h"

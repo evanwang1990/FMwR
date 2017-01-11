@@ -1,10 +1,10 @@
 ##' @title Auxiliary for Controlling FM Fitting
 ##'
 ##' @description
-##' Auxiliary function for \code{\link{fm}} fitting.
+##' Auxiliary function for \code{\link{fm.train}} fitting.
 ##'
 ##' @usage
-##' model.control(tast = "CLASSIFICATION", solver = "TDAP")
+##' model.control(task = "CLASSIFICATION", solver = "TDAP")
 ##'
 ##' @param task A character string naming the task for FM model, such as
 ##' "CLASSIFICATION", "REGRESSION"
@@ -40,17 +40,11 @@
 ##' model.control() # the default settings
 ##'
 ##'
-model.control <- function(task = "CLASSIFICATION", solver = "TDAP", ...)
+model.control <- function(task = c("CLASSIFICATION", "REGRESSION", "RANK"), ...) #TODO:RANK
 {
-  stopifnot(task %in% c("CLASSIFICATION", "REGRESSION"));
-  stopifnot(solver %in% c("MCMC", "ALS", "SGD", "FTRL", "TDAP"));
+  task <- match.arg(task)
   controls <- control_assign(model.control.default, list(...))
-
-  if (controls$is.default) {
-    message("Use default model settings.\n")
-  }
-
-  res <- list(task = task, solver = solver, nthreads = 1, hyper.params = controls$contr)
+  res <- list(task = task, nthreads = 1, hyper.params = controls$contr)
   class(res) <- "model.control"
   res
 }
