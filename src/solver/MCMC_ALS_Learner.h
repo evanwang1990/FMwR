@@ -192,18 +192,20 @@ void MCMC_ALS_Learner::update_w(Data& train, DVector<double>& error)
   SMatrix<float>* tdata = train.data_t;
   DVectorDouble& w = fm->w;
 
+  #ifdef _OPENMP
   omp_set_num_threads(nthreads);
+  #endif
   // set arrays to store the updated errors under each thread
   DMatrix<double> errs(nthreads, error.size());
   errs.assign_by_row(error);
 
   double w_mean, w_var, OLD(w), TMP(w), w_diff, tot_reduce, error_, val_;
-  uint j, g, end;
+  uint j, g, end; int current_thread;
   bool update_err;
   #pragma omp parallel
   {
     // update w
-    #pragma omp for private(w_mean, w_var, OLD(w), TMP(w), w_diff, val_, j, g, end, update_err)
+    #pragma omp for private(w_mean, w_var, OLD(w), TMP(w), w_diff, val_, j, g, end, update_err, current_thread)
     for (uint i = 0; i < train.num_features; i++)
     {
       end = tdata->row_idx[i+1];
@@ -213,12 +215,15 @@ void MCMC_ALS_Learner::update_w(Data& train, DVector<double>& error)
       TMP(w) = w[i];
       g = meta->attr_group[i];
       update_err = true;
+      #ifdef _OPENMP
+      current_thread = omp_get_thread_num();
+      #endif
 
       //update w[i]
       for (j = tdata->row_idx[i]; j < end; ++j)
       {
         val_ = tdata->value[j];
-        w_mean += errs(omp_get_thread_num(), tdata->col_idx[j]) * val_ - TMP(w) * val_ * val_;
+        w_mean += errs(current_thread, tdata->col_idx[j]) * val_ - TMP(w) * val_ * val_;
         w_var += val_ * val_;
       }
 
@@ -242,7 +247,7 @@ void MCMC_ALS_Learner::update_w(Data& train, DVector<double>& error)
         w_diff = OLD(w) - TMP(w);
         for (j = tdata->row_idx[i]; j < end; ++j)
         {
-          errs(omp_get_thread_num(), tdata->col_idx[j]) -= tdata->value[j] * w_diff; //partially update errors in parallel run type
+          errs(current_thread, tdata->col_idx[j]) -= tdata->value[j] * w_diff; //partially update errors in parallel run type
         }
       }
     }
