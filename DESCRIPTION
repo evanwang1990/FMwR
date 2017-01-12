@@ -10,10 +10,10 @@ License: GLP-3.0
 LazyData: TRUE
 Imports:
     Rcpp (>= 0.12.2),
-    parallel (>= 3.2.2),
-    Matrix
+    parallel (>= 3.2.0),
+    Matrix (>= 1.2-1)
 Suggests:
     data.table (>= 1.9.6),
-    ggplot2,
+    ggplot2 (>= 2.0.0),
 LinkingTo: Rcpp
 RoxygenNote: 5.0.1
