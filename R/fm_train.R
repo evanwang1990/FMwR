@@ -9,15 +9,15 @@
 #' library(FMwR)
 #' data("airquality")
 #' airquality <- airquality[complete.cases(airquality),]
-#' xairquality <- airquality[sample(1:nrow(airquality), 1000, TRUE),]
+#' airquality <- airquality[sample(1:nrow(airquality), 1000, TRUE),]
 #' airquality$Ozone <- ifelse(airquality$Ozone > 60, 1, -1)
 #' idx <- sample(1:nrow(airquality), ceiling(nrow(airquality)*0.6))
 #'
 #' train <- fm.matrix(airquality[idx, 2:6], airquality[idx, 1])
 #' test <- fm.matrix(airquality[-idx, 2:6], airquality[-idx, 1])
 #'
-#' fm_fit <- fm.train(train, control = list(track.control(step_size = 300000),
-#'                                          solver.control(solver = TDAP.solver(random_step = 10, gamma = 1e-5), max_iter = 1000000),
+#' fm_fit <- fm.train(train, control = list(track.control(step_size = 1000),
+#'                                          solver.control(solver = TDAP.solver(random_step = 10, gamma = 1e-5), max_iter = 12000),
 #'                                          model.control(L2.w1 = 0.1)))
 #' # or
 #' # fm_fit <- fm.train(train, control = list(track.control(step_size = 1),
@@ -39,14 +39,15 @@
 #' train <- fm.matrix(airquality[idx, 2:6], airquality[idx, 1])
 #' test <- fm.matrix(airquality[-idx, 2:6], airquality[-idx, 1])
 #'
-#' fm_fit <- fm.train(train, normalize = T, control = list(track.control(step_size = 10000, evaluate.metric = "RMSE", convergence = 0),
-#'                                                         solver.control(solver = SGD.solver(random_step = 10, learn_rate = 0.0001), max_iter = 1000000),
+#' fm_fit <- fm.train(train, normalize = T, control = list(track.control(step_size = 1000, evaluate.metric = "RMSE", convergence = 0),
+#'                                                         solver.control(solver = SGD.solver(random_step = 10, learn_rate = 0.0001), max_iter = 12000),
 #'                                                         model.control(task = "RE", factor.number = 3, L2.v = 0.5)))
 #'
 #' # or
 #' # fm_fit <- fm.train(train, normalize = T, control = list(track.control(step_size = 1, evaluate.metric = "RMSE"),
 #' #                                                         solver.control(solver = ALS.solver(), max_iter = 20),
-#'                                                           model.control(task = "RE", factor.number = 2)))
+#' #                                                         model.control(task = "RE", factor.number = 2)))
+#'
 #' fm_track <- fm.track(fm_fit, train, test, evaluate.metric = "MAE")
 #' plot(fm_track)
 #' fm_pred <- predict(fm_fit, test)
