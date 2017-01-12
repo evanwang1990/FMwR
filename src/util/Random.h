@@ -31,14 +31,16 @@ double fast_rexp()
 double fast_rnorm()
 {
   // Joseph L. Leva: A fast normal Random number generator
-  double u, v, x, y, Q;
+  double u, v, abs_v, x, y, Q;
 	do {
 		do {
 			u = fast_runif();
 		} while (u == 0.0);
 		v = 1.7156 * (fast_runif() - 0.5);
+		abs_v = v;
+		if (abs_v < 0) abs_v = -v;
 		x = u - 0.449871;
-		y = std::abs(v) + 0.386595;
+		y = abs_v + 0.386595;
 		Q = x*x + y*(0.19600*y-0.25472*x);
 		if (Q < 0.27597) { break; }
 	} while ((Q > 0.27846) || ((v*v) > (-4.0*u*u*std::log(u))));
@@ -93,7 +95,8 @@ double fast_trnorm_right(double right, double mean, double stdev)
 double fast_pnorm(double x)
 {
   #include "RandomData.h"
-  double TMP(x) = abs(x);
+  double TMP(x) = x;
+  if (TMP(x) < 0) TMP(x) = -x;
   double res;
   if (TMP(x) > _MAX_) {
     res = 0.999999900524235; // truncated
@@ -110,9 +113,11 @@ double fast_pnorm(double x)
 // dnorm(x) / (1 - pnorm(x))
 double fast_dpnorm(double x)
 {
+  double abs_x = x;
+  if (abs_x < 0) abs_x = -x;
   #include "RandomData_.h"
   if (x < _MIN_) { return 0.0; }
-  if (x > _MAX_) { return 0.1943369 + 0.9754752 * x + 0.4136861 * sqrt(abs(x)) - 0.5034295 * log(abs(x) + 1e-07); }
+  if (x > _MAX_) { return 0.1943369 + 0.9754752 * x + 0.4136861 * sqrt(abs_x) - 0.5034295 * log(abs_x + 1e-07); }
   int i = (int)( (x - _MIN_) * 5000);
   double w = (x - __X__[i]) * 5000;
   return w * __Y__[i + 1] + (1.0 - w) * __Y__[i];
