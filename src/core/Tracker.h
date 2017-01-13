@@ -113,7 +113,10 @@ List Tracker::save()
       _["v"]  = P.v.to_rtype()
     );
   }
-  return valid;
+
+  evaluations_of_train.resetSize(record_cnter); // ri 1~record_cnter not 1~max_iter
+
+  return List::create(_["trace"] = valid, _["evaluation.train"] = evaluations_of_train.to_rtype());
 }
 
 void Tracker::load(Model* fm, List valid)

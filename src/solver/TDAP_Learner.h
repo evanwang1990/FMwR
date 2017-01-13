@@ -223,7 +223,7 @@ double TDAP_Learner::calculate_grad_mult(double& y_hat, float& y_true)
   if (fm->TASK == REGRESSION) {
     y_hat = min(max_target, y_hat);
     y_hat = max(min_target, y_hat);
-    mult = -(y_true - y_hat);cout<<y_hat<<" "<<y_true<<endl;
+    mult = -(y_true - y_hat);
   } else if (fm->TASK == CLASSIFICATION) {
     mult = - y_true * (1.0 - 1.0 / (1.0 + exp(-y_true * y_hat)));
   }

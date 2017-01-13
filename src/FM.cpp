@@ -4,7 +4,7 @@ using namespace Rcpp;
 using namespace std;
 
 // [[Rcpp::export]]
-List FM(List data_, IntegerVector normalize, List fm_controls, List solver_controls, List track_controls)
+List FM(List data_, IntegerVector normalize, List fm_controls, List solver_controls, List track_controls, List model_list)
 {
   map<string, int> tasks_map;
   tasks_map["CLASSIFICATION"] = 10;
@@ -42,7 +42,7 @@ List FM(List data_, IntegerVector normalize, List fm_controls, List solver_contr
   tg.assign(target);
   data.add_target(&tg);
 
-  // init Model
+  // init/load Model
   Model fm;
   List hyper_params = fm_controls["hyper.params"];
   fm.k0            = (bool)hyper_params["keep.w0"];
@@ -62,6 +62,14 @@ List FM(List data_, IntegerVector normalize, List fm_controls, List solver_contr
   fm.TASK          = tasks_map[as<string>(fm_controls["task"])];
   fm.init();
 
+  SEXP is_model = model_list.attr("class");
+  if (!Rf_isNull(is_model)) {
+    List model = model_list["Model"];
+    fm.w0 = (double)(model["w0"]);
+    fm.w.assign(as<NumericVector>(model["w"]));
+    fm.v.assign(as<NumericMatrix>(model["v"]));
+  }
+
   // init Metainfo
   DataMetaInfo meta(data.num_features); //TODO: set variables' groups
 
@@ -79,6 +87,12 @@ List FM(List data_, IntegerVector normalize, List fm_controls, List solver_contr
   learner->fm                = &fm;
   learner->min_target        = min(target);
   learner->max_target        = max(target);
+  if (!Rf_isNull(is_model)) {
+    List scales_old        = model_list["Scales"];
+    NumericVector tg_range = as<NumericVector>(scales_old.attr("target.range"));
+    learner->min_target        = std::min(learner->min_target, tg_range[0]);
+    learner->max_target        = std::max(learner->max_target, tg_range[1]);
+  }
   learner->nthreads          = (int)solver_controls["nthreads"];
   learner->max_iter          = (int)solver_controls["max_iter"];
   learner->tracker.step_size = (int)track_controls["step_size"];
@@ -86,7 +100,6 @@ List FM(List data_, IntegerVector normalize, List fm_controls, List solver_contr
   learner->type              = evaluations_map[as<string>(track_controls["evaluate.metric"])]; //TODO:收敛 R中检验回归或分类对应的评价标准
   learner->tracker.type      = evaluations_map[as<string>(track_controls["evaluate.metric"])];
   learner->conv_condition    = (double)track_controls["convergence"];
-
   switch (fm.SOLVER) {
     case MCMC : {
       ((MCMC_Learner*)learner)->alpha_0   = (double)solver["alpha_0"];
@@ -140,40 +153,21 @@ List FM(List data_, IntegerVector normalize, List fm_controls, List solver_contr
 
   // output
   List res;
+  List md = fm.save_model();
+  md.attr("model.control") = fm_controls;
+  md.attr("solver.control") = solver_controls;
+  md.attr("track.control") = track_controls;
+  md.attr("convergence") = learner->convergent;
+  res["Model"] = md;
+
+  scales.attr("target.range") = NumericVector::create(learner->min_target, learner->max_target);
+  res["Scales"] = scales;
+
   if (learner->tracker.step_size > 0) {
-    NumericVector eval_train(learner->tracker.record_cnter);
-    for (int ri = 0; ri < learner->tracker.record_cnter; ri++) // ri 1~record_cnter not 1~max_iter
-    {
-      eval_train[ri] = learner->tracker.evaluations_of_train[ri];
-    }
-
-    List vd = List::create(
-      _["trace"]            = learner->tracker.save(),
-      _["evaluation.train"] = eval_train);
-    vd.attr("class") = "FMTrace";
-    vd.attr("metric") = as<string>(track_controls["evaluate.metric"]);
-
-    List md = fm.save_model();
-    md.attr("solver") = solver.attr("solver");
-    md.attr("task")   = fm_controls["task"];
-
-    res = List::create(
-      _["Model"]       = md,
-      _["Trace"]       = vd,
-      _["Scales"]      = scales,
-      _["Convergence"] = learner->convergent
-    );
-  } else {
-    res = List::create(_["Model"]       = fm.save_model(),
-                       _["Scales"]      = scales,
-                       _["Convergence"] = learner->convergent); //TODO:save_model 优化
+    res["Trace"] = learner->tracker.save();
   }
 
-
-
-  res["Range"] = NumericVector::create(learner->min_target, learner->max_target);
   res.attr("class") = "FM";
-
   return res;
 }
 
@@ -184,8 +178,9 @@ NumericVector FMPredict(List newdata, bool normalize, List model_list, int max_t
   // init newdata
   List newdata_ = newdata["features"];
   SMatrix<float> m(newdata_);
+  List scales;
   if (normalize) {
-    List scales = model_list["Scales"];
+    scales = model_list["Scales"];
     m.normalize(scales);
   }
   Data data;
@@ -198,14 +193,13 @@ NumericVector FMPredict(List newdata, bool normalize, List model_list, int max_t
   fm.nthreads = max_threads;
 
   // predict
-  string task = as<string>(model.attr("task"));
   DVector<double> pred(data.num_cases);
   pred.init(0.0);
-  if (task == "CLASSIFICATION") {
+  if (fm.TASK == CLASSIFICATION) {
     fm.predict_prob(data, pred);
   } else {
     fm.predict_batch(data, pred);
-    NumericVector tg_range = as<NumericVector>(model_list["Range"]);
+    NumericVector tg_range = as<NumericVector>(scales.attr("target.range"));
     #pragma omp parallel for num_threads(max_threads)
     for (uint i = 0; i < data.num_cases; i++) {
       if (pred[i] < tg_range[0])
@@ -226,8 +220,8 @@ NumericVector FMTrack(List newdata, List model_list, bool normalize, String type
   List newdata_ = newdata["features"];
   NumericVector newtg = as< NumericVector >(newdata["labels"]);
   SMatrix<float> m(newdata_);
+  List scales = model_list["Scales"];
   if (normalize) {
-    List scales = model_list["Scales"];
     m.normalize(scales);
   }
   Data data;
@@ -256,7 +250,7 @@ NumericVector FMTrack(List newdata, List model_list, bool normalize, String type
   List trace_ = trace["trace"];
   tracker.load(&fm, trace_);
   tracker.type = evaluations_map[type];
-  NumericVector tg_range = as<NumericVector>(model_list["Range"]);
+  NumericVector tg_range = as<NumericVector>(scales.attr("target.range"));
   tracker.report(&fm, data, tg_range[0], tg_range[1]);
 
   return tracker.evaluations_of_test.to_rtype();

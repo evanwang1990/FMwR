@@ -38,6 +38,20 @@ public:
     value = new T[dim];
   }
 
+  void resetSize(uint p_dim)
+  {
+    if (p_dim == dim) { return; }
+    if (value == NULL) { setSize(p_dim); }
+    T* new_value = new T[p_dim];
+    uint min_dim = dim < p_dim ? dim : p_dim;
+    for (uint i = 0; i < min_dim; i++) {
+      new_value[i] = value[i];
+    }
+    dim = p_dim;
+    delete [] value;
+    value = new_value;
+  }
+
   void init(T v)
   {
     for (uint i = 0; i < dim; i++) { value[i] = v; }

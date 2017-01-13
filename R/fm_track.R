@@ -8,14 +8,14 @@ fm.track.FM <- function(object, data = NULL, newdata = NULL, data.normalize = TR
   if (is.null(object$Trace)) {
     stop("no Trace in fm object")
   }
-  task <- attr(object$Model, "solver")
+  task <- attr(object$Model, "model.control")$task
   evaluate.metric <- match.arg(evaluate.metric)
   if ((task == "CLASSIFICATION" && evaluate.metric %in% c("RMSE", "MAE")) || (task == "REGRESSION" && evaluate.metric %in% c("LL", "AUC", "ACC"))) {
     stop("evaluate.metric is error")
   }
-  new_metric <- ifelse(attr(object$Trace, "metric") == evaluate.metric, FALSE, TRUE)
+  new_metric <- ifelse(attr(object$Model, "track.control")$evaluate.metric == evaluate.metric, FALSE, TRUE)
 
-  normalize <- ifelse(is.null(object$Scales), FALSE, TRUE)
+  normalize <- ifelse(is.null(object$Scales$mean), FALSE, TRUE)
 
 
   if (new_metric) {
@@ -56,7 +56,7 @@ fm.track.FM <- function(object, data = NULL, newdata = NULL, data.normalize = TR
   res <- list(
     iter = object$Trace$trace[[1]],
     trace.train = val1,
-    trace.valid = val2
+    trace.test = val2
     )
 
   attr(res, "class") <- c(class(res), "FMTrace")
@@ -71,11 +71,11 @@ plot.FMTrace <- function(object)
     trace = object$trace.train,
     type = "trace.train"
     )
-  if (!is.null(object$trace.valid)) {
+  if (!is.null(object$trace.test)) {
     data <- rbind(data, data.frame(
       iter = object$iter,
-      trace = object$trace.valid,
-      type = "trace.valid"
+      trace = object$trace.test,
+      type = "trace.test"
       ))
   }
 

@@ -6,8 +6,8 @@
 using namespace Rcpp;
 
 // FM
-List FM(List data_, IntegerVector normalize, List fm_controls, List solver_controls, List track_controls);
-RcppExport SEXP FMwR_FM(SEXP data_SEXP, SEXP normalizeSEXP, SEXP fm_controlsSEXP, SEXP solver_controlsSEXP, SEXP track_controlsSEXP) {
+List FM(List data_, IntegerVector normalize, List fm_controls, List solver_controls, List track_controls, List model_list);
+RcppExport SEXP FMwR_FM(SEXP data_SEXP, SEXP normalizeSEXP, SEXP fm_controlsSEXP, SEXP solver_controlsSEXP, SEXP track_controlsSEXP, SEXP model_listSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -16,7 +16,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< List >::type fm_controls(fm_controlsSEXP);
     Rcpp::traits::input_parameter< List >::type solver_controls(solver_controlsSEXP);
     Rcpp::traits::input_parameter< List >::type track_controls(track_controlsSEXP);
-    rcpp_result_gen = Rcpp::wrap(FM(data_, normalize, fm_controls, solver_controls, track_controls));
+    Rcpp::traits::input_parameter< List >::type model_list(model_listSEXP);
+    rcpp_result_gen = Rcpp::wrap(FM(data_, normalize, fm_controls, solver_controls, track_controls, model_list));
     return rcpp_result_gen;
 END_RCPP
 }

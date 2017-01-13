@@ -180,23 +180,9 @@ void Model::predict_prob(Data& _data, DVector<double>& _out)
 List Model::save_model()
 {
   return List::create(
-    _["model.control"] = List::create(
-      _["keep.w0"]       = k0,
-      _["L2.w0"]         = l2_reg0,
-      _["keep.w1"]       = k1,
-      _["L1.w1"]         = l1_regw,
-      _["L2.w1"]         = l2_regw,
-      _["factor.number"] = num_factor,
-      _["v.init_mean"]   = init_mean,
-      _["v.init_stdev"]  = init_stdev,
-      _["L1.v"]          = l1_regv,
-      _["L2.v"]          = l2_regv
-    ),
-    _["model.params"] = List::create(
-      _["w0"] = w0,
-      _["w"]  = w.to_rtype(),
-      _["v"]  = v.to_rtype()
-    )
+    _["w0"] = w0,
+    _["w"]  = w.to_rtype(),
+    _["v"]  = v.to_rtype()
   );
 }
 
@@ -214,23 +200,27 @@ void Model::load_model(List model_list)
   tasks_map["REGRESSION"    ] = 20;
   tasks_map["RANKING"       ] = 30;
 
-  List model_control = model_list["model.control"];
-  k0                 = (bool)(model_control["keep.w0"]);
-  l2_reg0            = (double)(model_control["L2.w0"]);
-  k1                 = (bool)(model_control["keep.w1"]);
-  l1_regw            = (double)(model_control["L1.w1"]);
-  l2_regw            = (double)(model_control["L2.w1"]);
-  num_factor         = (int)(model_control["factor.number"]);
-  init_mean          = (double)(model_control["v.init_mean"]);
-  init_stdev         = (double)(model_control["v.init_stdev"]);
-  l1_regv            = (double)(model_control["L1.v"]);
-  l2_regv            = (double)(model_control["L2.v"]);
-  List model_params  = model_list["model.params"];
-  w0                 = (double)(model_params["w0"]);
-  SOLVER             = solvers_map[as<string>(model_list.attr("solver"))];
-  TASK               = tasks_map[as<string>(model_list.attr("task"))];
-  w.assign(as<NumericVector>(model_params["w"]));
-  v.assign(as<NumericMatrix>(model_params["v"]));
+  List model_control = model_list.attr("model.control");
+  List hyper_params = model_control["hyper.params"];
+  k0                 = (bool)(hyper_params["keep.w0"]);
+  l2_reg0            = (double)(hyper_params["L2.w0"]);
+  k1                 = (bool)(hyper_params["keep.w1"]);
+  l1_regw            = (double)(hyper_params["L1.w1"]);
+  l2_regw            = (double)(hyper_params["L2.w1"]);
+  num_factor         = (int)(hyper_params["factor.number"]);
+  init_mean          = (double)(hyper_params["v.init_mean"]);
+  init_stdev         = (double)(hyper_params["v.init_stdev"]);
+  l1_regv            = (double)(hyper_params["L1.v"]);
+  l2_regv            = (double)(hyper_params["L2.v"]);
+  nthreads           = (int)model_control["nthreads"];
+  w0                 = (double)(model_list["w0"]);
+  w.assign(as<NumericVector>(model_list["w"]));
+  v.assign(as<NumericMatrix>(model_list["v"]));
+  TASK               = tasks_map[as<string>(model_control["task"])];
+  List solver_control= model_list.attr("solver.control");
+  List solver        = solver_control["solver"];
+  SOLVER             = solvers_map[as<string>(solver.attr("solver"))];
+
 }
 
 #endif

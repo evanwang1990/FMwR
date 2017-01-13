@@ -1,3 +1,7 @@
+fm.train <- function(...) {
+  UseMethod("fm.train")
+}
+
 #' @title Fitting Factorization Machine Models
 #'
 #' @description
@@ -53,22 +57,18 @@
 #'
 #'
 #'
-fm.train <- function(data, normalize = TRUE, max_threads = 1, control)
+fm.train.fm.matrix <- function(data, normalize = TRUE, max_threads = 1, control)
 {
-  if (class(data) != "fm.matrix") {
-    stop("The input must be a fm.matrix object")
-  }
-
   if (!is.logical(normalize) && !is.integer(normalize)) {
     stop("normalize should be a logical value or an integer vector")
   }
   if (is.logical(normalize)) {
     if (normalize)
-      normalize <- 1:data$features$dim[2]
+      normalize <- 1:ncol(data)
     else
       normalize <- -1
   } else {
-    if (any(normalize < 1 || normalize > data$features$dim[2])) {
+    if (any(normalize < 1 || normalize > ncol(data))) {
       stop("the columns to be normalized is out of range")
     }
   }
@@ -108,7 +108,7 @@ fm.train <- function(data, normalize = TRUE, max_threads = 1, control)
     }
   }
 
-  fit <- FM(data, normalize-1, fm_controls = control_default$model, solver_controls = control_default$solver, track_controls = control_default$track)
+  fit <- FM(data, normalize-1, fm_controls = control_default$model, solver_controls = control_default$solver, track_controls = control_default$track, list())
 
   fit
 }
