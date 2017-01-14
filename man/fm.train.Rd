@@ -4,14 +4,12 @@
 \alias{fm.train}
 \title{Fitting Factorization Machine Models}
 \usage{
-fm.train(data, normalize = TRUE, max_threads = 1, control)
+fm.train(data, normalize = TRUE, control)
 }
 \arguments{
 \item{data}{}
 
 \item{normalize}{}
-
-\item{max_threads}{}
 }
 \examples{
 

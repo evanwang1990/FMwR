@@ -4,8 +4,6 @@
 #'
 #' @param normalize
 #'
-#' @param max_threads
-#'
 #' @usage fm.train(data, normalize = TRUE, control)
 #'
 #' @examples
@@ -71,8 +69,9 @@ fm.train <- function(...) {
 
 fm.train.fm.matrix <- function(data, normalize = TRUE, control)
 {
-  max_threads <- getOption("FM.threads")
-  if (is.null(max_threads)) max_threads <- 1
+  if (!is.null(data$labels)) {
+    stop("there are no labels in data")
+  }
   if (!is.logical(normalize) && !is.integer(normalize)) {
     stop("normalize should be a logical value or an integer vector")
   }
@@ -102,8 +101,8 @@ fm.train.fm.matrix <- function(data, normalize = TRUE, control)
       control_default[[ca_names[ci]]] <- control[[ci]]
     }
   }
-  control_default$model$nthreads      <- max_threads
-  control_default$solver$nthreads     <- max_threads
+  control_default$model$nthreads      <- fm.get_threads()
+  control_default$solver$nthreads     <- fm.get_threads()
   control_default$track$max_iter <- control_default$solver$max_iter
   if (attr(control_default$solver$solver, "solver") %in% c("MCMC", "ALS") && control_default$track$step_size > 1) {
     warning("the step_size will be set to 1 for MCMC/ALS solver")

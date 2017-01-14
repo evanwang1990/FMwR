@@ -1,11 +1,27 @@
+#' @title Update Factorization Machines Model
+#'
+#' @description
+#'
+#' @param object a FM object, created by \link{fm.train}
+#'
+#' @param data a fm.matrix object, created by \link{fm.matrix}
+#'
+#' @param normalize whether to normalize data
+#'
+#' @param control list of congtrols, \link{model.control}, \link{solver.control}, \link{track.control}
+#'
+#' @usage fm.update(object, data, normalize = TRUE, control = NULL)
 fm.update <- function(...) {
   UseMethod("fm.update")
 }
 
-fm.update.FM <- function(object, data, normalize = TRUE, max_threads = 1, control) {
+fm.update.FM <- function(object, data, normalize = TRUE, control = NULL) {
   # data
   if (class(data) != "fm.matrix") {
     stop("The input must be a fm.matrix object")
+  }
+  if (!is.null(data$labels)) {
+    stop("there are no labels in data")
   }
 
   f1 <- setdiff(object$Scales$model.vars, attr(data$features, "feature_names"))
@@ -82,8 +98,8 @@ fm.update.FM <- function(object, data, normalize = TRUE, max_threads = 1, contro
       control_default[[ca_names[ci]]] <- control[[ci]]
     }
   }
-  control_default$model$nthreads      <- max_threads
-  control_default$solver$nthreads     <- max_threads
+  control_default$model$nthreads      <- fm.get_threads()
+  control_default$solver$nthreads     <- fm.get_threads()
   control_default$track$max_iter <- control_default$solver$max_iter
   if (attr(control_default$solver$solver, "solver") %in% c("MCMC", "ALS") && control_default$track$step_size > 1) {
     warning("the step_size will be set to 1 for MCMC/ALS solver")

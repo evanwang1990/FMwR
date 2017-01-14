@@ -4,12 +4,10 @@
 \alias{solver.control}
 \title{Auxiliary for controlling optimization routines}
 \usage{
-solver.control(max_iter = 10000, nthreads = 1, convergence = 1e-4, evaluate.metric = "LL", solver = TDAP.solver())
+solver.control(max_iter = 10000, convergence = 1e-4, evaluate.metric = "LL", solver = TDAP.solver())
 }
 \arguments{
 \item{max_iter}{integer giving maximal number of iterations, 25 for MCMC/ALS and 10000 for other optimization routines by default}
-
-\item{nthreads}{integer, number of threads to speed up computing, \strong{openmp} should be supported}
 
 \item{solver}{function to set parameters of optimization routine}
 }
@@ -20,7 +18,7 @@ Auxiliary functions for optimization routines
 SGD/FTRL/TDAP updates model every single example, while MCMC/ALS needs to sweeps through all the data for each update.
 So the maximal number of iterations of MCMC/ALS is much smaller, which is 25 by default.
 
-By now, only MCMC and ALS support parallel computing. And if openmp is not supported, nthreads makes no sense.
+By now, only MCMC and ALS support parallel computing.
 
 \strong{solver} is a function to set parameters of optimization routine further, including \link{ALS.solver}
 \link{MCMC.solver} \link{SGD.solver} \link{TDAP.solver} \link{FTRL.solver}

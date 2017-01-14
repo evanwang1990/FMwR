@@ -2,6 +2,7 @@ importFrom(Rcpp, evalCpp)
 importFrom(parallel, detectCores)
 importFrom(MatrixModels, model.Matrix)
 export(
+  "fm.set_threads",
   "fm.matrix",
   "fm.matrix.dgCMatrix",
   "fm.matrix.matrix",

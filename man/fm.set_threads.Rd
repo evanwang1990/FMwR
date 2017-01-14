@@ -7,7 +7,7 @@
 fm.set_threads(max.threads = 1)
 }
 \arguments{
-\item{max.threads}{an integer, the number of threads}
+\item{max.threads}{an integer, number of threads to speed up computing, \strong{openmp} should be supported.}
 }
 \description{
 set the maximum number of available threads for parallel execution

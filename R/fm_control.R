@@ -44,7 +44,7 @@ model.control <- function(task = c("CLASSIFICATION", "REGRESSION", "RANK"), ...)
 {
   task <- match.arg(task)
   controls <- control_assign(model.control.default, list(...))
-  res <- list(task = task, nthreads = 1, hyper.params = controls$contr)
+  res <- list(task = task, hyper.params = controls$contr)
   class(res) <- "model.control"
   res
 }

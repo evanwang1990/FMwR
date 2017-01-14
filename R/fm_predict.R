@@ -4,12 +4,12 @@
 #' Obtains predictions from a fitted factorization machines model object.
 #'
 #' @usage
-#' predict(object, newdata = NULL, max_threads = 1)
+#' predict(object, newdata = NULL)
 #'
 #' @param object a fitted object of class inheriting from "fm".
 #' @param newdata a data frame in which to look for variables with which to predict.
-#' @param max_threads an integer, number of threads to speed up computing, \strong{openmp} should be supported.
-predict.FM <- function (object, newdata = NULL, normalize = TRUE, max_threads = 1)
+#'
+predict.FM <- function (object, newdata = NULL, normalize = TRUE)
 {
   if (is.null(newdata)) {
     stop("newdata is null")
@@ -28,7 +28,7 @@ predict.FM <- function (object, newdata = NULL, normalize = TRUE, max_threads = 
     warning("some variables in FM model are normalized, but those in newdata will not")
   }
 
-  pred <- FMPredict(newdata, normalize, object, max_threads)
+  pred <- FMPredict(newdata, normalize, object, fm.get_threads())
 
   pred
 }

@@ -17,14 +17,14 @@
 #' "AUC"、"ACC"、"LL" for classification model
 #'
 #' @usage fm.track(object, data = NULL, newdata = NULL, data.normalize = TRUE, newdata.normalize = TRUE,
-#'                 evaluate.metric = c("LL", "AUC", "ACC", "RMSE", "MAE"), max_threads = 1L)
+#'                 evaluate.metric = c("LL", "AUC", "ACC", "RMSE", "MAE"))
 #'
 fm.track <- function(object, ...) {
   UseMethod("fm.track")
 }
 
 
-fm.track.FM <- function(object, data = NULL, newdata = NULL, data.normalize = TRUE, newdata.normalize = TRUE, evaluate.metric = c("LL", "AUC", "ACC", "RMSE", "MAE"), max_threads = 1L)
+fm.track.FM <- function(object, data = NULL, newdata = NULL, data.normalize = TRUE, newdata.normalize = TRUE, evaluate.metric = c("LL", "AUC", "ACC", "RMSE", "MAE"))
 {
   if (is.null(object$Trace)) {
     stop("no Trace in fm object")
@@ -53,7 +53,7 @@ fm.track.FM <- function(object, data = NULL, newdata = NULL, data.normalize = TR
         stop("data's target should be c(0, 1) or c(-1, 1)")
       }
     }
-    val1 <- FMTrack(data, object, normalize, evaluate.metric, max_threads)
+    val1 <- FMTrack(data, object, normalize, evaluate.metric, fm.get_threads())
   } else {
     val1 <- object$Trace$evaluation.train
   }
@@ -72,7 +72,7 @@ fm.track.FM <- function(object, data = NULL, newdata = NULL, data.normalize = TR
       stop("newdata's target should be c(0, 1) or c(-1, 1)")
     }
   }
-  val2 <- FMTrack(newdata, object, normalize, evaluate.metric, max_threads)
+  val2 <- FMTrack(newdata, object, normalize, evaluate.metric, fm.get_threads())
 
   res <- list(
     iter = object$Trace$trace[[1]],

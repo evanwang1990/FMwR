@@ -4,11 +4,9 @@
 ##' Auxiliary functions for optimization routines
 ##'
 ##' @usage
-##' solver.control(max_iter = 10000, nthreads = 1, convergence = 1e-4, evaluate.metric = "LL", solver = TDAP.solver())
+##' solver.control(max_iter = 10000, convergence = 1e-4, evaluate.metric = "LL", solver = TDAP.solver())
 ##'
 ##' @param max_iter integer giving maximal number of iterations, 25 for MCMC/ALS and 10000 for other optimization routines by default
-##'
-##' @param nthreads integer, number of threads to speed up computing, \strong{openmp} should be supported
 ##'
 ##' @param solver function to set parameters of optimization routine
 ##'
@@ -16,12 +14,12 @@
 ##' SGD/FTRL/TDAP updates model every single example, while MCMC/ALS needs to sweeps through all the data for each update.
 ##' So the maximal number of iterations of MCMC/ALS is much smaller, which is 25 by default.
 ##'
-##' By now, only MCMC and ALS support parallel computing. And if openmp is not supported, nthreads makes no sense.
+##' By now, only MCMC and ALS support parallel computing.
 ##'
 ##' \strong{solver} is a function to set parameters of optimization routine further, including \link{ALS.solver}
 ##' \link{MCMC.solver} \link{SGD.solver} \link{TDAP.solver} \link{FTRL.solver}
 
-solver.control <- function(max_iter = 10000, nthreads = 1, solver = TDAP.solver())
+solver.control <- function(max_iter = 10000, solver = TDAP.solver())
 {
   solver_ <- deparse(substitute(solver))
   if (grepl("MCMC|ALS", solver_) && max_iter > 100) {
@@ -29,13 +27,7 @@ solver.control <- function(max_iter = 10000, nthreads = 1, solver = TDAP.solver(
     max_iter <- min(max_iter, 100)
   }
 
-  max_threads = parallel::detectCores()
-  if (nthreads >= max_threads) {
-    warning("nthreads is greater than the max number of threads.\n  so nthreads will be set as ", max_threads, "!\n\n", immediate. = TRUE)
-    nthreads = max_threads
-  }
-
-  res <- list(nthreads = nthreads, max_iter = max_iter, solver = solver)
+  res <- list(nthreads = fm.get_threads(), max_iter = max_iter, solver = solver)
   class(res) <- "solver.control"
   res
 }

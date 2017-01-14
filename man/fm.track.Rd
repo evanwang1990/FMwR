@@ -6,7 +6,7 @@
 \title{Track Model's Performance}
 \usage{
 fm.track(object, data = NULL, newdata = NULL, data.normalize = TRUE, newdata.normalize = TRUE,
-                evaluate.metric = c("LL", "AUC", "ACC", "RMSE", "MAE"), max_threads = 1L)
+                evaluate.metric = c("LL", "AUC", "ACC", "RMSE", "MAE"))
 }
 \arguments{
 \item{object}{a FM object}
