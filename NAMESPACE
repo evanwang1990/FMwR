@@ -6,10 +6,17 @@ export(
   "fm.matrix.dgCMatrix",
   "fm.matrix.matrix",
   "fm.matrix.data.frame",
+  "dim.fm.matrix",
   "fm.train",
   "fm.train.fm.matrix",
+  "predict.FM",
   "fm.update",
   "fm.update.FM",
+  "fm.track",
+  "fm.track.FM",
+  "plot.FMTrace",
+  "fm.select",
+  "fm.select.FM",
   "model.control",
   "solver.control",
   "track.control",
@@ -17,11 +24,6 @@ export(
   "ALS.solver",
   "SGD.solver",
   "FTRL.solver",
-  "TDAP.solver",
-  "predict.FM",
-  "fm.track",
-  "fm.track.FM",
-  "plot.FMTrace",
-  "dim.fm.matrix"
+  "TDAP.solver"
 )
 useDynLib(FMwR)
