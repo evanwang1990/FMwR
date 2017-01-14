@@ -1,3 +1,24 @@
+#' @title Track Model's Performance
+#'
+#' @aliases fm.track.FM
+#'
+#' @description track model's performance on two datasets, the performance are
+#' measured by \strong{evaluate.metric}
+#'
+#' @param object a FM object
+#'
+#' @param data,newdata objects created by fm.matrix
+#'
+#' @param data.normalize whether to normalize data
+#'
+#' @param newdata.normalize whether to normalize newdata
+#'
+#' @param evaluate.metric a character, "RMSE"、"MAE" for regression model or
+#' "AUC"、"ACC"、"LL" for classification model
+#'
+#' @usage fm.track(object, data = NULL, newdata = NULL, data.normalize = TRUE, newdata.normalize = TRUE,
+#'                 evaluate.metric = c("LL", "AUC", "ACC", "RMSE", "MAE"), max_threads = 1L)
+#'
 fm.track <- function(object, ...) {
   UseMethod("fm.track")
 }
@@ -59,7 +80,7 @@ fm.track.FM <- function(object, data = NULL, newdata = NULL, data.normalize = TR
     trace.test = val2
     )
 
-  attr(res, "class") <- c(class(res), "FMTrace")
+  attr(res, "class") <- c("FMTrace")
   attr(res, "evaluate.metric") <- evaluate.metric
   res
 }

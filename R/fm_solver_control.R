@@ -58,6 +58,7 @@ MCMC.solver.default <- list(
 ##' @param mu_0
 ##' @param alpha
 ##' @param w0_mean_0
+##' @family solver
 MCMC.solver <- function(...)
 {
   controls <- control_assign(MCMC.solver.default, list(...))
@@ -84,6 +85,7 @@ ALS.solver.default <- list(
 ##' @param mu_0
 ##' @param alpha
 ##' @param w0_mean_0
+##' @family solver
 ALS.solver <- function(...)
 {
   controls <- control_assign(ALS.solver.default, list(...))
@@ -102,7 +104,7 @@ SGD.solver.default <- list(
 ##' @title SGD solver
 ##' @param learn_rate
 ##' @param random_step
-##'
+##' @family solver
 SGD.solver <- function(...)
 {
   controls <- control_assign(SGD.solver.default, list(...))
@@ -127,6 +129,7 @@ FTRL.solver.default <- list(
 ##' @param beta_w
 ##' @param beta_v
 ##' @param random_step
+##' @family solver
 FTRL.solver <- function(...)
 {
   controls <- control_assign(FTRL.solver.default, list(...))
@@ -149,6 +152,7 @@ TDAP.solver.default <- list(
 ##' @param alpha_w
 ##' @param alpha_v
 ##' @param random_step
+##' @family solver
 TDAP.solver <- function(...)
 {
   controls <- control_assign(TDAP.solver.default, list(...))

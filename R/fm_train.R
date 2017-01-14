@@ -1,10 +1,12 @@
-fm.train <- function(...) {
-  UseMethod("fm.train")
-}
-
 #' @title Fitting Factorization Machine Models
 #'
-#' @description
+#' @param data
+#'
+#' @param normalize
+#'
+#' @param max_threads
+#'
+#' @usage fm.train(data, normalize = TRUE, control)
 #'
 #' @examples
 #'
@@ -32,6 +34,10 @@ fm.train <- function(...) {
 #' fm_pred <- predict(fm_fit, test)
 #' table(test$labels, fm_pred > 0.5)
 #'
+#' fm_fit_update <- fm.update(fm_fit, train, control = list(track.control(step_size = 1000), solver.control(max_iter = 5000)))
+#' fm_track_update <- fm.track(fm_fit_update, train, test, evaluate.metric = "LL")
+#' fm_best <- fm.select(fm_fit_update, fm_track_update, drop.trace = TRUE)
+#'
 #'
 #' # 2. regression
 #'
@@ -58,8 +64,15 @@ fm.train <- function(...) {
 #'
 #'
 #'
-fm.train.fm.matrix <- function(data, normalize = TRUE, max_threads = 1, control)
+fm.train <- function(...) {
+  UseMethod("fm.train")
+}
+
+
+fm.train.fm.matrix <- function(data, normalize = TRUE, control)
 {
+  max_threads <- getOption("FM.threads")
+  if (is.null(max_threads)) max_threads <- 1
   if (!is.logical(normalize) && !is.integer(normalize)) {
     stop("normalize should be a logical value or an integer vector")
   }
