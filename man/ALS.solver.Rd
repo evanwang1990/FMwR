@@ -6,4 +6,9 @@
 \usage{
 ALS.solver(...)
 }
+\seealso{
+Other solver: \code{\link{FTRL.solver}},
+  \code{\link{MCMC.solver}}, \code{\link{SGD.solver}},
+  \code{\link{TDAP.solver}}
+}
 

@@ -6,7 +6,9 @@
 \usage{
 SGD.solver(...)
 }
-\arguments{
-\item{random_step}{}
+\seealso{
+Other solver: \code{\link{ALS.solver}},
+  \code{\link{FTRL.solver}}, \code{\link{MCMC.solver}},
+  \code{\link{TDAP.solver}}
 }
 
