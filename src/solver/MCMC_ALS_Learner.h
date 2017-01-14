@@ -200,7 +200,7 @@ void MCMC_ALS_Learner::update_w(Data& train, DVector<double>& error)
   errs.assign_by_row(error);
 
   double w_mean, w_var, OLD(w), TMP(w), w_diff, tot_reduce, error_, val_;
-  uint j, g, end; int current_thread;
+  uint j, g, end; int current_thread = 0;
   bool update_err;
   #pragma omp parallel
   {

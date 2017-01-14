@@ -79,22 +79,22 @@ plot.FMTrace <- function(object)
       ))
   }
 
-  evaluate.method <- switch(
+  evaluate.metric <- switch(
     attr(object, "evaluate.metric"),
-    LL = "loglikehood",
-    ACC = "accurancy",
-    AUC = "auc"
+    LL = "Loglikehood",
+    ACC = "Accurancy",
+    AUC = "AUC",
+    MAE = "MAE",
+    RMSE = "RMSE"
     )
   gg <- suggest_package("ggplot2")
   if (gg) {
-    res <- ggplot(data = data, aes(x = iter)) +
-             geom_point(aes(y = trace, color = as.factor(type))) +
-             labs(list(title = "Plot of Trace", x = "number of iterations", y = evaluate.method, color = NULL)) +
-             theme(legend.position = "bottom")
+    ggplot(data = data, aes(x = iter)) +
+           geom_point(aes(y = trace, color = as.factor(type))) +
+           labs(list(title = "Plot of Trace", x = "number of iterations", y = evaluate.metric, color = NULL)) +
+           theme(legend.position = "bottom")
   } else {
-    res <- plot(data$iter, data$trace, col = ifelse(data$type == "trace.train", "blue", "red"), type = 'p', pch = 20,
-                xlab = "number of iterations", ylab = "evaluate.method", main = "Validation Plot")
+   plot(data$iter, data$trace, col = ifelse(data$type == "trace.train", "blue", "red"), type = 'p', pch = 20,
+        xlab = "number of iterations", ylab = evaluate.metric, main = "Plot of Trace", sub = "blue:data red:newdata")
   }
-
-  res
 }

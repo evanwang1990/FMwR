@@ -6,7 +6,6 @@
 #include <omp.h>
 #endif
 #include <assert.h>
-#include <omp.h>
 #include "../util/Dvector.h"
 #include "../util/Dmatrix.h"
 #include "../util/Smatrix.h"
