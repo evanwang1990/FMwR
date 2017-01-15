@@ -69,7 +69,7 @@ fm.train <- function(...) {
 
 fm.train.fm.matrix <- function(data, normalize = TRUE, control)
 {
-  if (!is.null(data$labels)) {
+  if (is.null(data$labels)) {
     stop("there are no labels in data")
   }
   if (!is.logical(normalize) && !is.integer(normalize)) {

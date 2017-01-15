@@ -20,7 +20,7 @@ fm.update.FM <- function(object, data, normalize = TRUE, control = NULL) {
   if (class(data) != "fm.matrix") {
     stop("The input must be a fm.matrix object")
   }
-  if (!is.null(data$labels)) {
+  if (is.null(data$labels)) {
     stop("there are no labels in data")
   }
 
