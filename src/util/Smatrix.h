@@ -109,10 +109,11 @@ public:
       colSumSqr[idx] += val * val;
     }
 
+    double mult_dim = (double)(dim1) * ((double)dim1 - 1);
     for (uint col = 0, i = 0; col < dim2; col ++)
     {
       if (col == (uint)norm_columns[i]) {
-        colSumSqr[col] = std::sqrt(colSumSqr[col] / (dim1 - 1) - colSum[col] * colSum[col] / (dim1 * (dim1 - 1)));
+        colSumSqr[col] = std::sqrt(colSumSqr[col] / (dim1 - 1) - colSum[col] * colSum[col] / mult_dim);
         colSum[col] /= dim1;
         i++;
       } else {
