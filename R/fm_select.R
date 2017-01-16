@@ -27,7 +27,7 @@ fm.select.FM <- function(object, trace = NULL, best.iter = NULL, drop.trace = FA
     stop("trace is not a FMTrace object")
   }
   if (is.null(object$Trace) || length(object$Trace) <= 1) {
-
+    stop("the Trace part in object have been dropped")
   }
   compare <- cmp(attr(object$Model, "track.control")$evaluate.metric)
   compares <- ifelse(identical(compare, `<`), `min`, `max`)
@@ -49,6 +49,10 @@ fm.select.FM <- function(object, trace = NULL, best.iter = NULL, drop.trace = FA
   } else {
     best.trace.test <- compares(trace$trace.test)
     best.iter <- which(trace$trace.test == best.trace.test)
+    if (length(best.iter) > 1) {
+      best.trace.train <- compares(trace$trace.train[best.iter])
+      best.iter <- which(trace$trace.train == best.trace.train)[1]
+    }
   }
 
   params <- object$Trace$trace[[best.iter+1]]
