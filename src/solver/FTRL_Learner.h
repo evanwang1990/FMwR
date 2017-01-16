@@ -2,6 +2,7 @@
 #define FTRL_H_
 
 #include <Rcpp.h>
+#include <cmath>
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -131,7 +132,7 @@ void FTRL_Learner::learn(Data& train)
             fm->predict_prob(train, y_hat_);
           }
           double eval_score = tracker.evaluate(fm, y_hat_, *train.target);
-          if (iter > tracker.step_size && abs((eval_score - OLD(eval_score)) / (OLD(eval_score) + 1e-30)) <= conv_condition) {
+          if (iter > tracker.step_size && fabs((eval_score - OLD(eval_score)) / (OLD(eval_score) + 1e-30)) <= conv_condition) {
             conv_times ++;
           } else {
             conv_times = 0;
@@ -159,10 +160,12 @@ void FTRL_Learner::calculate_param()
   fm->w0 = - z_w0 * alpha_w / (beta_w + sqrt(n_w0));
 
   // w
+  double TMP(z_w);
+  #pragma omp parallel for num_threads(fm->nthreads) private(TMP(z_w))
   for (uint i = 0; i < fm->num_attribute; ++i)
   {
-    double TMP(z_w) = z_w[i];
-    if (abs(TMP(z_w)) <= fm->l1_regw) {
+    TMP(z_w) = z_w[i];
+    if (fabs(TMP(z_w)) <= fm->l1_regw) {
       fm->w[i] = 0.0;
     } else {
       double sign = TMP(z_w) < 0.0 ? -1.0:1.0;
@@ -173,10 +176,12 @@ void FTRL_Learner::calculate_param()
   // v
   for (uint f = 0; f < fm->num_factor; ++f)
   {
+    double TMP(z_v);
+    #pragma omp parallel for num_threads(fm->nthreads) private(TMP(z_v))
     for (uint i = 0; i < fm->num_attribute; ++i)
     {
-      double TMP(z_v) = z_v(f, i);
-      if (abs(TMP(z_v)) <= fm->l1_regv) {
+      TMP(z_v) = z_v(f, i);
+      if (fabs(TMP(z_v)) <= fm->l1_regv) {
         fm->v(f, i) = 0.0;
       } else {
         double sign = TMP(z_v) < 0.0 ? -1.0:1.0;
