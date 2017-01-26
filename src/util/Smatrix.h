@@ -247,6 +247,15 @@ public:
     value   = matrix.value[pointer];
   }
 
+  void set_row(uint row_no)
+  {
+    begin   = matrix.row_idx[row_no];
+    end     = matrix.row_idx[row_no+1];
+    pointer = begin;
+    row     = row_no;
+    index   = matrix.col_idx[pointer];
+    value   = matrix.value[pointer];
+  }
 };
 
 

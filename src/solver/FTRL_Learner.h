@@ -160,31 +160,31 @@ void FTRL_Learner::calculate_param()
   fm->w0 = - z_w0 * alpha_w / (beta_w + sqrt(n_w0));
 
   // w
-  double TMP(z_w);
-  #pragma omp parallel for num_threads(fm->nthreads) private(TMP(z_w))
+  double TMP(z_w), sign;
+  #pragma omp parallel for num_threads(nthreads) private(TMP(z_w), sign)
   for (uint i = 0; i < fm->num_attribute; ++i)
   {
     TMP(z_w) = z_w[i];
     if (fabs(TMP(z_w)) <= fm->l1_regw) {
       fm->w[i] = 0.0;
     } else {
-      double sign = TMP(z_w) < 0.0 ? -1.0:1.0;
+      sign = TMP(z_w) < 0.0 ? -1.0:1.0;
       fm->w[i] = - (TMP(z_w) - sign * fm->l1_regw) / ((beta_w + sqrt(n_w[i])) / alpha_w + fm->l2_regw);
     }
   }
 
   // v
+  double TMP(z_v);
   for (uint f = 0; f < fm->num_factor; ++f)
   {
-    double TMP(z_v);
-    #pragma omp parallel for num_threads(fm->nthreads) private(TMP(z_v))
+    #pragma omp parallel for num_threads(nthreads) private(TMP(z_v))
     for (uint i = 0; i < fm->num_attribute; ++i)
     {
       TMP(z_v) = z_v(f, i);
       if (fabs(TMP(z_v)) <= fm->l1_regv) {
         fm->v(f, i) = 0.0;
       } else {
-        double sign = TMP(z_v) < 0.0 ? -1.0:1.0;
+        sign = TMP(z_v) < 0.0 ? -1.0:1.0;
         fm->v(f, i) = - (TMP(z_v) - sign * fm->l1_regv) / ((beta_v + sqrt(n_v(f, i))) / alpha_v + fm->l2_regv);
       }
     }

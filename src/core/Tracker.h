@@ -49,7 +49,6 @@ void Tracker::init()
   record_index.setSize(record_times);
   parameters.setSize(record_times);
   evaluations_of_train.setSize(record_times);
-  // evaluations_of_test.setSize(record_times);
 }
 
 void Tracker::record(Model* fm, int iter_idx, double eval_score)

@@ -2,6 +2,7 @@
 #define TDAP_H_
 
 #include <Rcpp.h>
+#include <cmath>
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -161,7 +162,7 @@ void TDAP_Learner::learn(Data& train)
             fm->predict_prob(train, y_hat_);
           }
           double eval_score = tracker.evaluate(fm, y_hat_, *train.target);
-          if (iter > tracker.step_size && abs((eval_score - OLD(eval_score)) / (OLD(eval_score) + 1e-30)) <= conv_condition) {
+          if (iter > tracker.step_size && fabs((eval_score - OLD(eval_score)) / (OLD(eval_score) + 1e-30)) <= conv_condition) {
             conv_times ++;
           } else {
             conv_times = 0;
@@ -190,27 +191,31 @@ void TDAP_Learner::calculate_param()
   fm->w0 = - z_w0 / delta_w0;
 
   // w
+  double TMP(z_w), sign;
+  #pragma omp parallel for num_threads(nthreads) private(TMP(z_w), sign)
   for (uint i = 0; i < fm->num_attribute; ++i)
   {
-    double TMP(z_w) = z_w[i];
-    if (abs(TMP(z_w)) <= fm->l1_regw) {
+    TMP(z_w) = z_w[i];
+    if (fabs(TMP(z_w)) <= fm->l1_regw) {
       fm->w[i] = 0.0;
     } else {
-      double sign = TMP(z_w) < 0.0 ? -1.0:1.0;
+      sign = TMP(z_w) < 0.0 ? -1.0:1.0;
       fm->w[i] = - (TMP(z_w) - sign * fm->l1_regw) / (delta_w[i] + fm->l2_regw);
     }
   }
 
   // v
+  double TMP(z_v);
   for (uint f = 0; f < fm->num_factor; ++f)
   {
+    #pragma omp parallel for num_threads(nthreads) private(TMP(z_v), sign)
     for (uint i = 0; i < fm->num_attribute; ++i)
     {
-      double TMP(z_v) = z_v(f, i);
-      if (abs(TMP(z_v)) <= fm->l1_regv) {
+      TMP(z_v) = z_v(f, i);
+      if (fabs(TMP(z_v)) <= fm->l1_regv) {
         fm->v(f, i) = 0.0;
       } else {
-        double sign = TMP(z_v) < 0.0 ? -1.0:1.0;
+        sign = TMP(z_v) < 0.0 ? -1.0:1.0;
         fm->v(f, i) = - (TMP(z_v) - sign * fm->l1_regv) / (delta_v(f, i) + fm->l2_regv);
       }
     }

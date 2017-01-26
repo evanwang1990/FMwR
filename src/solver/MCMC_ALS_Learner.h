@@ -193,7 +193,9 @@ void MCMC_ALS_Learner::update_w(Data& train, DVector<double>& error)
   DVectorDouble& w = fm->w;
 
   #ifdef _OPENMP
-  omp_set_num_threads(nthreads);
+    omp_set_num_threads(nthreads);
+  #else
+    nthreads = 1;
   #endif
   // set arrays to store the updated errors under each thread
   DMatrix<double> errs(nthreads, error.size());

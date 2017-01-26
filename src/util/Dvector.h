@@ -75,6 +75,11 @@ public:
   //   for (uint i = 0; i < dim; i++) { value[i] = v[i]; }
   // }
 
+  void assign(T& v)
+  {
+    for (uint i = 0; i < dim; i++) { value[i] = v; }
+  }
+
   void assign(DVector<T>& v)
   {
     if (v.dim != dim) { setSize(v.dim); }

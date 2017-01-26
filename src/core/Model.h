@@ -55,6 +55,7 @@ public:
   void predict_prob(Data& _data, DVector<double>& _out);
   List save_model();
   void load_model(List model_list);
+  void assign(Model* fm);
 };
 
 void Model::init()
@@ -191,8 +192,9 @@ void Model::load_model(List model_list)
   solvers_map["MCMC"] = 100;
   solvers_map["ALS" ] = 200;
   solvers_map["SGD" ] = 300;
-  solvers_map["FTRL"] = 400;
-  solvers_map["TDAP"] = 500;
+  solvers_map["BGD"]  = 400;
+  solvers_map["FTRL"] = 500;
+  solvers_map["TDAP"] = 600;
 
   map<string, int> tasks_map;
   tasks_map["CLASSIFICATION"] = 10;
@@ -220,6 +222,29 @@ void Model::load_model(List model_list)
   List solver        = solver_control["solver"];
   SOLVER             = solvers_map[as<string>(solver.attr("solver"))];
 
+}
+
+void Model::assign(Model* fm)
+{
+  SOLVER = fm->SOLVER;
+  TASK = fm->TASK;
+  m_sum.assign(fm->m_sum);
+  m_sum_sqr.assign(fm->m_sum_sqr);
+  w0 = fm->w0;
+  w.assign(fm->w);
+  v.assign(fm->v);
+  nthreads = fm->nthreads;
+  num_attribute = fm->num_attribute;
+  k0 = fm->k0;
+  k1 = fm->k1;
+  num_factor = fm->num_factor;
+  l1_regw = fm->l1_regw;
+  l1_regv = fm->l1_regv;
+  l2_reg0 = fm->l2_reg0;
+  l2_regw = fm->l2_regw;
+  l2_regv = fm->l2_regv;
+  init_mean = fm->init_mean;
+  init_stdev = fm->init_stdev;
 }
 
 #endif
