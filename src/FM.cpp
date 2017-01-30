@@ -15,8 +15,9 @@ List FM(List data_, IntegerVector normalize, List fm_controls, List solver_contr
   solvers_map["MCMC"] = 100;
   solvers_map["ALS" ] = 200;
   solvers_map["SGD" ] = 300;
-  solvers_map["FTRL"] = 400;
-  solvers_map["TDAP"] = 500;
+  solvers_map["BGD"]  = 400;
+  solvers_map["FTRL"] = 500;
+  solvers_map["TDAP"] = 600;
 
   map<string, int> evaluations_map;
   evaluations_map["LL"  ] =  000;
