@@ -1,0 +1,19 @@
+---
+title: "Factorization Machines Tutorial"
+author: "Evan Wang"
+date: "2017/1/15"
+output: rmarkdown::html_vignette
+vignetee: >
+  %\VignetteIndexEntry{Factorization Machines Tutorial}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Classification
+```{r}
+
+```

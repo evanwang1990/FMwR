@@ -15,5 +15,8 @@ Imports:
 Suggests:
     data.table (>= 1.9.6),
     ggplot2 (>= 2.0.0),
+    knitr,
+    rmarkdown
 LinkingTo: Rcpp
 RoxygenNote: 5.0.1
+VignetteBuilder: knitr
