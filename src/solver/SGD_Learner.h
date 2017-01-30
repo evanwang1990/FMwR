@@ -43,13 +43,15 @@ public:
 
 void SGD_Learner::init()
 {
-  if (fm->l1_regw > 0 || fm-> l1_regv > 0) {
+  if (fm->l1_regw > 0 || fm->l1_regv > 0) {
     l1_penalty = true;
     regw = fm->l1_regw;
     regv = fm->l1_regv;
+    if(fm->l2_regw > 0 || fm->l2_regv > 0)
+      Rf_warning("Received L1 & L2 regularization rate > 0. Skipping L2 - only L1 will be used.");
   } else {
     regw = fm->l2_regw;
-    regv = fm->l2_regw;
+    regv = fm->l2_regv;
   }
 
   if (fm->TASK != CLASSIFICATION) {
