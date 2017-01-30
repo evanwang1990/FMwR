@@ -42,7 +42,7 @@ public:
 
 public:
   Data ()
-    : has_x(false), has_xt(false), data(NULL), data_t(NULL), target(NULL), min_target(R_PosInf), max_target(R_NegInf)
+    : has_x(false), has_xt(false), data_t(NULL), data(NULL), target(NULL), min_target(R_PosInf), max_target(R_NegInf)
   {}
 
   void add_data(SMatrix<float>* _data)
