@@ -16,9 +16,8 @@ typedef unsigned int uint;
 #define MCMC 100
 #define ALS  200
 #define SGD  300
-#define BGD  400
-#define FTRL 500
-#define TDAP 600
+#define FTRL 400
+#define TDAP 500
 
 // Evaluation
 #define LL   000

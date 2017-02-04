@@ -256,6 +256,11 @@ public:
     index   = matrix.col_idx[pointer];
     value   = matrix.value[pointer];
   }
+
+  uint size()
+  {
+    return end - begin;
+  }
 };
 
 
