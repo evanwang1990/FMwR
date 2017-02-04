@@ -18,9 +18,5 @@ fm.set_threads <- function(max.threads = 1)
 
 fm.get_threads <- function()
 {
-  max_threads <- getOption("FM.threads")
-  if (is.null(max_threads)) {
-    max_threads <- 1
-  }
-  max_threads
+  getOption("FM.threads", 1)
 }
