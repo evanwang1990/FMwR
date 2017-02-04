@@ -41,7 +41,7 @@ public:
   void init();
   void learn(Data& train);
   double calculate_grad_mult(double& y_hat, float& y_true);
-  void calculate_param();
+  void calculate_param(SMatrix<float>::Iterator& it);
 };
 
 
@@ -112,7 +112,8 @@ void FTRL_Learner::learn(Data& train)
         }
       }
 
-      calculate_param();
+      it.reset();
+      calculate_param(it);
 
       if (tracker.step_size > 0) {
         ii ++;
@@ -154,22 +155,30 @@ void FTRL_Learner::learn(Data& train)
   }
 }
 
-void FTRL_Learner::calculate_param()
+void FTRL_Learner::calculate_param(SMatrix<float>::Iterator& it)
 {
   // w0
   fm->w0 = - z_w0 * alpha_w / (beta_w + sqrt(n_w0));
 
+  uint row_size = it.size();
+  DVector<uint> non_zero_columns(row_size);
+  for (uint i = 0; i < row_size; ++i, ++it) {
+    non_zero_columns[i] = it.index;
+  }
+  
   // w
   double TMP(z_w), sign;
-  #pragma omp parallel for num_threads(nthreads) private(TMP(z_w), sign)
-  for (uint i = 0; i < fm->num_attribute; ++i)
+  uint col_idx;
+  #pragma omp parallel for num_threads(nthreads) private(TMP(z_w), sign, col_idx)
+  for (uint i = 0; i < row_size; ++i)
   {
-    TMP(z_w) = z_w[i];
+    col_idx = non_zero_columns[i];
+    TMP(z_w) = z_w[col_idx];
     if (fabs(TMP(z_w)) <= fm->l1_regw) {
-      fm->w[i] = 0.0;
+      fm->w[col_idx] = 0.0;
     } else {
       sign = TMP(z_w) < 0.0 ? -1.0:1.0;
-      fm->w[i] = - (TMP(z_w) - sign * fm->l1_regw) / ((beta_w + sqrt(n_w[i])) / alpha_w + fm->l2_regw);
+      fm->w[col_idx] = - (TMP(z_w) - sign * fm->l1_regw) / ((beta_w + sqrt(n_w[col_idx])) / alpha_w + fm->l2_regw);
     }
   }
 
@@ -177,15 +186,16 @@ void FTRL_Learner::calculate_param()
   double TMP(z_v);
   for (uint f = 0; f < fm->num_factor; ++f)
   {
-    #pragma omp parallel for num_threads(nthreads) private(TMP(z_v))
-    for (uint i = 0; i < fm->num_attribute; ++i)
+    #pragma omp parallel for num_threads(nthreads) private(TMP(z_v), col_idx)
+    for (uint i = 0; i < row_size; ++i)
     {
-      TMP(z_v) = z_v(f, i);
+      col_idx = non_zero_columns[i];
+      TMP(z_v) = z_v(f, col_idx);
       if (fabs(TMP(z_v)) <= fm->l1_regv) {
-        fm->v(f, i) = 0.0;
+        fm->v(f, col_idx) = 0.0;
       } else {
         sign = TMP(z_v) < 0.0 ? -1.0:1.0;
-        fm->v(f, i) = - (TMP(z_v) - sign * fm->l1_regv) / ((beta_v + sqrt(n_v(f, i))) / alpha_v + fm->l2_regv);
+        fm->v(f, col_idx) = - (TMP(z_v) - sign * fm->l1_regv) / ((beta_v + sqrt(n_v(f, col_idx))) / alpha_v + fm->l2_regv);
       }
     }
   }
