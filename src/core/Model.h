@@ -32,18 +32,20 @@ public:
   DMatrixDouble v;
 
 public:
-  int nthreads; // predict in parallel run type
   uint num_attribute;
-  bool k0, k1;
   uint num_factor;
   double l1_regw, l1_regv;
   double l2_reg0, l2_regw, l2_regv;
   // double reg0, regw, regv;
   double init_mean, init_stdev;
-
+  bool k0, k1;
+  int nthreads; // predict in parallel run type
 public:
   Model()
-    : SOLVER(TDAP), TASK(CLASSIFICATION), num_factor(0), init_mean(0.0), init_stdev(0.01),l1_regw(0.0), l1_regv(0.0), l2_reg0(0.0), l2_regw(0.0), l2_regv(0.0), k0(true), k1(true), nthreads(1) //rename keep_w0
+    : SOLVER(TDAP), TASK(CLASSIFICATION), num_factor(0),
+      l1_regw(0.0), l1_regv(0.0), l2_reg0(0.0), l2_regw(0.0), l2_regv(0.0),
+      init_mean(0.0), init_stdev(0.01),
+      k0(true), k1(true), nthreads(1) //rename keep_w0
   {}
 
   ~Model() {}

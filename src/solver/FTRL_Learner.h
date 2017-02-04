@@ -32,7 +32,7 @@ public:
 
 public:
   FTRL_Learner()
-    : Learner(), alpha_w(0.1), alpha_v(0.1), beta_w(1.0), beta_v(1.0), random_step(1)
+    : Learner(), alpha_w(0.1), beta_w(1.0), alpha_v(0.1), beta_v(1.0), random_step(1)
   {}
 
   ~FTRL_Learner() {}
